@@ -1,0 +1,134 @@
+﻿@model LoginVM
+@{
+    Layout = "_Layout";
+}
+<style>
+    body {
+        background: #f8f9fa; /* light gray background */
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .login-container {
+        max-width: 360px;
+        margin: 80px auto;
+        padding: 30px 25px;
+        background: #fff;
+        border: 1px solid #e6e6e6;
+        border-radius: 10px;
+        text-align: center;
+    }
+
+
+    .auth-title {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+
+    .auth-icon {
+        font-size: 4rem;
+        margin-bottom: 30px;
+    }
+
+    .form-control {
+        padding: 12px;
+        font-size: 0.95rem;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        margin-bottom: 15px;
+    }
+
+    .btn-login {
+        width: 100%;
+        border-radius: 6px;
+        font-weight: 600;
+        margin-top: 10px;
+    }
+
+    .fa-eye {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #6c757d;
+    }
+
+    .psw-parent {
+        position: relative;
+    }
+
+    .extra-links {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        margin-top: 10px;
+    }
+
+        .extra-links a {
+            text-decoration: none;
+            color: #0d6efd;
+        }
+
+    .signup-box {
+        max-width: 360px;
+        margin: 15px auto;
+        padding: 15px;
+        background: #fff;
+        border: 1px solid #e6e6e6;
+        border-radius: 10px;
+        text-align: center;
+        font-size: 0.9rem;
+    }
+
+    input[type="password"]::-ms-reveal,
+    input[type="password"]::-ms-clear,
+    input[type="password"]::-webkit-textfield-decoration-button {
+        display: none !important;
+        -webkit-appearance: none;
+    }
+</style>
+
+<div class="login-container">
+    <div class="auth-title">Bridge</div>
+    <i class="fas fa-archway auth-icon"></i>
+
+    <form asp-action="Login" method="post">
+        <div class="text-danger mb-3" asp-validation-summary="ModelOnly"></div>
+
+        <input asp-for="Username" type="email" class="form-control" placeholder="Email" />
+        <span asp-validation-for="Username" class="text-danger"></span>
+
+        <div class="psw-parent">
+            <input asp-for="Password" type="password" class="form-control" id="password" placeholder="Password" />
+            <i class="fas fa-eye" id="togglePassword"></i>
+        </div>
+        <span asp-validation-for="Password" class="text-danger"></span>
+
+        <button type="submit" class="btn btn-primary btn-login">Log In</button>
+
+        <div class="extra-links">
+            <div class="form-check d-flex align-items-center">
+                <input asp-for="RememberPassword" type="checkbox" class="form-check-input me-2" id="rememberMe">
+                <label for="rememberMe" class="form-check-label mb-0">Remember me</label>
+            </div>
+            <a asp-action="ForgotPassword">Forgot password?</a>
+        </div>
+    </form>
+</div>
+
+<div class="signup-box">
+    Don’t have an account? <a asp-action="Register">Sign up</a>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial"></partial>
+}
+<script>
+    const togglePassword = document.getElementById("togglePassword");
+    togglePassword.addEventListener("click", () => {
+        const password = document.getElementById("password");
+        password.type = password.type === "password" ? "text" : "password";
+        togglePassword.classList.toggle('fa-eye-slash');
+    });
+</script>

@@ -1,0 +1,47 @@
+﻿@{
+    Layout = "_Layout";
+}
+
+<style>
+    .auth-container {
+        max-width: 400px;
+        margin: 80px auto;
+        padding: 40px;
+        background: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+
+    .auth-title {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+
+    .auth-icon {
+        font-size: 4rem;
+        margin-bottom: 30px; 
+    }
+
+    .auth-buttons .btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 1rem;
+        border-radius: 8px;
+    }
+
+    .auth-buttons a + a {
+        margin-top: 15px;
+    }
+</style>
+
+<div class="auth-container">
+    <h1 class="auth-title">Bridge</h1>
+    <i class="fas fa-archway auth-icon"></i>
+
+    <div class="auth-buttons d-grid">
+        <a class="btn btn-primary" asp-controller="Account" asp-action="Login">Log In</a>
+        <a class="btn btn-secondary" asp-controller="Account" asp-action="Register">Create Account</a>
+    </div>
+</div>

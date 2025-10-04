@@ -1,0 +1,149 @@
+﻿@model FriendlyRS1.ViewModels.RegisterViewModel
+@{
+    Layout = "_Layout";
+}
+
+<style>
+    body {
+        background: #f8f9fa;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .auth-container {
+        max-width: 400px;
+        margin: 80px auto;
+        padding: 30px 25px;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+
+    .auth-title {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 25px;
+    }
+
+    .auth-icon {
+        font-size: 4rem;
+        margin-bottom: 30px;
+    }
+
+    .form-control {
+        padding: 10px;
+        font-size: 0.95rem;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        margin-bottom: 15px;
+    }
+
+    .btn-register {
+        width: 100%;
+        border-radius: 6px;
+        font-weight: 600;
+        margin-top: 10px;
+    }
+
+    .fa-eye {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #6c757d;
+    }
+
+    .psw-parent {
+        position: relative;
+    }
+
+    .extra-links {
+        text-align: center;
+        font-size: 0.9rem;
+        margin-top: 15px;
+    }
+
+        .extra-links a {
+            text-decoration: none;
+            color: #0d6efd;
+        }
+
+    .radio-group {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-bottom: 15px;
+    }
+
+        .radio-group input {
+            margin-right: 5px;
+        }
+
+    input[type="password"]::-ms-reveal,
+    input[type="password"]::-ms-clear,
+    input[type="password"]::-webkit-textfield-decoration-button {
+        display: none !important;
+        -webkit-appearance: none;
+    }
+
+</style>
+
+<div class="auth-container">
+    <h1 class="auth-title">Bridge</h1>
+    <i class="fas fa-archway auth-icon"></i>
+
+    <form asp-action="Register" method="post">
+        <div class="text-danger mb-2" asp-validation-summary="ModelOnly"></div>
+
+        <input asp-for="FirstName" class="form-control" placeholder="First Name" />
+        <span asp-validation-for="FirstName" class="text-danger"></span>
+
+        <input asp-for="LastName" class="form-control" placeholder="Last Name" />
+        <span asp-validation-for="LastName" class="text-danger"></span>
+
+        <input asp-for="Email" type="email" class="form-control" placeholder="Email" />
+        <small class="text-secondary d-block mb-2">We will not show your email to anyone</small>
+        <span asp-validation-for="Email" class="text-danger"></span>
+
+        <input asp-for="DateOdBirth" type="date" class="form-control mb-2" />
+        <span asp-validation-for="DateOdBirth" class="text-danger"></span>
+
+        <div class="radio-group">
+            @for (int i = 0; i < Model.Gender.Count; i++)
+            {
+                <label>
+                    <input type="radio" asp-for="GenderId" value="@Model.Gender[i].Id" /> @Model.Genders[i]
+                </label>
+            }
+        </div>
+        <span asp-validation-for="GenderId" class="text-danger d-block mb-2"></span>
+
+        <div class="psw-parent">
+            <input asp-for="Password" class="form-control" id="password" placeholder="Password" />
+            <i class="fas fa-eye" id="togglePassword"></i>
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
+
+        <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Confirm Password" />
+        <span asp-validation-for="ConfirmPassword" class="text-danger mb-2"></span>
+
+        <button type="submit" class="btn btn-primary btn-register">Create Account</button>
+
+        <div class="extra-links">
+            Have an account? <a asp-action="Login">Log In</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial"></partial>
+}
+<script>
+    const togglePassword = document.getElementById("togglePassword");
+    togglePassword.addEventListener("click", () => {
+        const password = document.getElementById("password");
+        password.type = password.type === "password" ? "text" : "password";
+        togglePassword.classList.toggle('fa-eye-slash');
+    });
+</script>
