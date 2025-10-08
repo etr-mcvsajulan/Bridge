@@ -13,7 +13,7 @@
     <script src="~/js/JsHelper.js"></script>
 
 
-    <title>@ViewData["Title"] Friendly</title>
+    <title>@ViewData["Title"] Bridge</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" />
     <link rel="stylesheet" href="~/css/custom.css" />
@@ -180,13 +180,13 @@
         <nav class="navbar navbar-expand-sm  navbar-light fixed-top bg-light border-bottom box-shadow d-flex justify-content-lg-between justify-content-start layout-nav">
             <div class="d-flex align-items-center search-div">
                 <a class="navbar-brand text-secondary" asp-area="" asp-controller="Home" asp-action="Index">
-                    <i class="fas fa-globe fa-lg text-info bar-icon"></i>
+                    <i class="fas fa-globe fa-lg text-primary bar-icon"></i>
                 </a>
 
                 <div class="d-flex">
                     <div class="has-search">
                         <span class="fa fa-search form-control-feedback"></span>
-                        <input type="text" placeholder="Search friendly" id="searchFriendly" maxlength="60" class="searchFriendly" oninput="UpdateUrl()" autocomplete="off" />
+                        <input type="text" placeholder="Search" id="searchFriendly" maxlength="60" class="searchFriendly" oninput="UpdateUrl()" autocomplete="off" />
                         <button class="btn btn-outline-info p-2 searchButton search-button" onclick="SearchPeople()">Search</button>
                     </div>
                 </div>
@@ -202,30 +202,30 @@
             <div class="d-flex align-items-center location-icons">
 
                 <div class=" nav-icon-default nav-icon px-lg-3 pr-3" id="home" data-toggle="tooltip" data-placement="top" title="Home page">
-                    <i class="fas fa-house-user fa-2x text-info bar-icon"></i>
+                    <i class="fas fa-house-user fa-2x text-primary bar-icon"></i>
                 </div>
 
                 <div class=" nav-icon-default px-lg-3 px-3" id="nearby" data-toggle="tooltip" data-placement="top" title="People nearby">
-                    <i class="fas fa-map-marker-alt fa-2x text-info  bar-icon"></i>
+                    <i class="fas fa-map-marker-alt fa-2x text-primary  bar-icon"></i>
                 </div>
             </div>
 
             <div class="acitvity-icons icons-responsive">
                 <ul class="d-flex align-items-center justify-content-between mb-0 p-0" style="list-style: none;">
                     <li data-toggle="tooltip" title="My Profile" class="px-lg-3 px-1">
-                        <a class="far fa-user fa-2x text-info bar-icon" asp-controller="UserProfile" asp-action="Index" asp-route-id="@null" style="text-decoration:none"></a>
+                        <a class="far fa-user fa-2x text-primary bar-icon" asp-controller="UserProfile" asp-action="Index" asp-route-id="@null" style="text-decoration:none"></a>
                     </li>
                     <li class="text-primary font-weight-bold px-lg-3 px-1"> @(((ClaimsIdentity)User.Identity).FindFirst("FirstName").Value)</li>
                     <li data-toggle="tooltip" title="Messages" class="px-lg-3 px-1">
-                        <i class="far fa-comment fa-2x text-info bar-icon"></i>
+                        <i class="far fa-comment fa-2x text-primary bar-icon"></i>
                     </li>
                     <li id="notif" data-toggle="tooltip" title="Notifications" class="px-lg-3 px-1">
                         <span class="fa-stack" data-count="0" id="notif-count">
-                            <i class="far fa-bell fa-2x fa-stack-1x fa-inverse text-info bar-icon"></i>
+                            <i class="far fa-bell fa-2x fa-stack-1x fa-inverse text-primary bar-icon"></i>
                         </span>
                     </li>
                     <li data-toggle="tooltip" title="Log out" class="px-lg-3 px-1">
-                        <a class="fas fa-sign-out-alt fa-2x text-info bar-icon" onclick="LogOut()"></a>
+                        <a class="fas fa-sign-out-alt fa-2x text-primary bar-icon" onclick="LogOut()"></a>
                     </li>
                 </ul>
             </div>

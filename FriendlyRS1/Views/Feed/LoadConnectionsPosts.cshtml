@@ -81,7 +81,7 @@
 
                                 <div class="d-flex justify-content-between text-secondary">
                                     <a>0 interests</a>
-                                    <a>0 comments</a>
+                                    <a>@item.Comments.Count() comments</a>
                                 </div>
                                 <hr style="width: 100%" />
                                 <div class="d-flex">
@@ -90,20 +90,33 @@
                                         <span class="text-secondary">Interested</span>
                                     </button>
 
-                                    <button class="flex-grow-1 btn btn-light">
+                                    <button class="flex-grow-1 btn btn-light" onclick="toggleCommentBox(@item.Id)">
                                         <i class="far fa-comment-alt text-secondary fa-lg"></i>
                                         <span>Comment</span>
                                     </button>
                                 </div>
 
+                                <!-- Comment Section -->
+                                <div id="@($"commentSection{item.Id}")" class="mt-3 d-none">
+                                    <div id="@($"commentsList{item.Id}")">
+                                        @foreach (var c in item.Comments)
+                                        {
+                                            <div id="comment-@c.Id" class="border rounded p-2 mb-2 bg-light">
+                                                <strong>@c.AuthorName:</strong>
+                                                <p class="mb-0">@c.Text</p>
+                                                <small class="text-muted">@c.DateCreated.ToString("g")</small>
+                                            </div>
+                                        }
+                                    </div>
 
-                                <script>
-                                    $(function () {
-                                        // Initialize timeago on all the <time>
-                                        $("time.timeago").timeago();
-                                    });
+                                    <!-- Add New Comment -->
+                                    <div class="d-flex mt-2">
+                                        <input type="text" class="form-control mr-2" id="@($"newComment{item.Id}")" placeholder="Write a comment..." />
+                                        <button class="btn btn-primary" onclick="addComment(@item.Id)">Post</button>
+                                    </div>
+                                </div>
 
-                                </script>
+
                             </div>
                         </div>
                     </div>
@@ -113,3 +126,114 @@
     </div>
 
 }
+
+<script>
+    // ✅ Use global variable but prevent redeclaration
+    window.commentConnection = window.commentConnection || null;
+
+    $(document).ready(function () {
+        $("time.timeago").timeago();
+
+        // 🟢 Initialize SignalR connection only once
+        if (!window.commentConnection) {
+            window.commentConnection = new signalR.HubConnectionBuilder()
+                .withUrl("/commentHub")
+                .build();
+
+            window.commentConnection
+                .start()
+                .then(() => {
+                    console.log("✅ SignalR connected");
+
+                    // Join all posts currently on the page
+                    $(".tab-content").each(function () {
+                        const postId = $(this).attr("id").replace("post", "");
+                        window.commentConnection.invoke("JoinPostGroup", parseInt(postId));
+                    });
+                })
+                .catch(err => console.error("SignalR connection error:", err));
+
+            // 🧹 Remove any old handlers
+            window.commentConnection.off("ReceiveComment");
+            window.commentConnection.off("UpdateComment");
+            window.commentConnection.off("DeleteComment");
+
+            // 🟢 Receive comment
+            window.commentConnection.on("ReceiveComment", (postId, authorName, text, dateCreated, commentId) => {
+                appendComment(postId, authorName, text, dateCreated, commentId);
+            });
+
+            // 🟡 Update comment
+            window.commentConnection.on("UpdateComment", (postId, commentId, text, dateCreated) => {
+                const commentEl = $(`#comment-${commentId}`);
+                if (commentEl.length) {
+                    commentEl.find("p").text(text);
+                    commentEl.find("small").text(new Date(dateCreated).toLocaleString());
+                }
+            });
+
+            // 🔴 Delete comment
+            window.commentConnection.on("DeleteComment", (postId, commentId) => {
+                $(`#comment-${commentId}`).remove();
+            });
+        }
+    });
+
+    // ✅ Make functions globally available (not inside jQuery ready)
+    function toggleCommentBox(postId) {
+        const section = $(`#commentSection${postId}`);
+        section.toggleClass("d-none");
+
+        if (!section.hasClass("d-none")) {
+            loadComments(postId);
+        }
+    }
+
+    function loadComments(postId) {
+        $.get(`/Comment/GetComments/${postId}`)
+            .done(comments => {
+                const list = $(`#commentsList${postId}`);
+                list.empty();
+
+                // Sort comments ascending by date
+                comments.sort((a, b) => new Date(a.dateCreated) - new Date(b.dateCreated));
+
+                comments.forEach(c => {
+                    appendComment(postId, c.authorName || "Anonymous", c.text, c.dateCreated, c.id);
+                });
+            })
+            .fail(() => console.error("❌ Failed to load comments."));
+    }
+
+    function appendComment(postId, authorName, text, dateCreated, id = null) {
+        if (id && $(`#comment-${id}`).length > 0) return; // prevent duplicates
+
+        const safeId = id ? `id="comment-${id}"` : "";
+        const html = `
+                <div ${safeId} class="border rounded p-2 mb-2 bg-light">
+                    <strong>${authorName}:</strong>
+                    <p class="mb-0">${text}</p>
+                    <small class="text-muted">${new Date(dateCreated).toLocaleString()}</small>
+                </div>
+            `;
+        $(`#commentsList${postId}`).append(html);
+    }
+
+    function addComment(postId) {
+        const input = $(`#newComment${postId}`);
+        const text = input.val().trim();
+        if (!text) return alert("Please enter a comment.");
+
+        $.post(`/Comment/AddComment`, { postId, text })
+            .done(res => {
+                if (res.success) {
+                    input.val("");
+                } else {
+                    alert("Failed to add comment.");
+                }
+            })
+            .fail(() => alert("❌ Failed to post comment."));
+    }
+</script>
+
+

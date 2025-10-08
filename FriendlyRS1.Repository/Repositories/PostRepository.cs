@@ -20,9 +20,7 @@ namespace FriendlyRS1.Repository.Repositories
 
         public List<Post> ConectionsPosts(int id, int take, int skip)
         {
-
             var list = new int[] { id }.AsQueryable();
-
 
             List<Post> posts = (from p in _context.Post.Select(p => new Post
             {
@@ -38,10 +36,10 @@ namespace FriendlyRS1.Repository.Repositories
                                             .Union(from f1 in _context.Users where f1.Id == id select f1.Id)
                                             on p.AuthorId equals t2
                                 select p)
-                .Skip(skip)
-                .Take(take)
-                .AsNoTracking()
-                .ToList();
+            .Skip(skip)
+            .Take(take)
+            .AsNoTracking()
+            .ToList();
 
             return posts;
         }

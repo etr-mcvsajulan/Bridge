@@ -21,6 +21,6 @@ namespace DataLayer.EntityModels
         [ForeignKey("HobbyId")]
         public Hobby Hobby { get; set; }
         public string Text { get; set; }
-      
+        public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
     }
 }

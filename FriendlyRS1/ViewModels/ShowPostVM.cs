@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DataLayer.EntityModels;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -21,5 +22,6 @@ namespace FriendlyRS1.ViewModels
         public string Hobby { get; set; }
         public DateTime DateTime { get; set; }
         public bool IsMe { get; set; }
+        public List<CommentVM> Comments { get; set; } = new List<CommentVM>();
     }
 }

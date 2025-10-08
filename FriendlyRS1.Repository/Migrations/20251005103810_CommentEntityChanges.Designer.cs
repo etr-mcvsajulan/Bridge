@@ -4,6 +4,7 @@ using FriendlyRS1.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FriendlyRS1.Repository.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251005103810_CommentEntityChanges")]
+    partial class CommentEntityChanges
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -223,6 +226,9 @@ namespace FriendlyRS1.Repository.Migrations
                     b.Property<int>("PostId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("PostId1")
+                        .HasColumnType("int");
+
                     b.Property<string>("Text")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -233,7 +239,9 @@ namespace FriendlyRS1.Repository.Migrations
 
                     b.HasIndex("PostId");
 
-                    b.ToTable("Comment");
+                    b.HasIndex("PostId1");
+
+                    b.ToTable("Comments");
                 });
 
             modelBuilder.Entity("DataLayer.EntityModels.Country", b =>
@@ -671,10 +679,14 @@ namespace FriendlyRS1.Repository.Migrations
                         .IsRequired();
 
                     b.HasOne("DataLayer.EntityModels.Post", "Post")
-                        .WithMany("Comments")
+                        .WithMany()
                         .HasForeignKey("PostId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
+
+                    b.HasOne("DataLayer.EntityModels.Post", null)
+                        .WithMany("Comments")
+                        .HasForeignKey("PostId1");
 
                     b.Navigation("Author");
 

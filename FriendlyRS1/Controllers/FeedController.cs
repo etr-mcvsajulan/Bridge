@@ -8,11 +8,13 @@ using DataLayer.EntityModels;
 using FriendlyRS1.Helper;
 using FriendlyRS1.Helper.Messages;
 using FriendlyRS1.Repository.RepostorySetup;
+using FriendlyRS1.SignalRChat.Hubs;
 using FriendlyRS1.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Memory;
 using NToastNotify;
 
@@ -26,16 +28,25 @@ namespace FriendlyRS1.Controllers
         private readonly IMemoryCache memoryCache;
         private readonly IMapper _mapper;
         private readonly IToastNotification _toastNotification;
-        public FeedController(UserManager<ApplicationUser> userManager, IUnitOfWork unitOfWork, IMapper mapper, IToastNotification toastNotification)
+        private readonly SignInManager<ApplicationUser> _signInManager;
+        public FeedController(UserManager<ApplicationUser> userManager, IUnitOfWork unitOfWork, IMapper mapper, IToastNotification toastNotification, SignInManager<ApplicationUser> signInManager)
         {
             _userManager = userManager;
             this.unitOfWork = unitOfWork;
             _mapper = mapper;
             _toastNotification = toastNotification;
+            _signInManager = signInManager;
         }
         public async Task<IActionResult> Index()
         {
             var loggedUser = await _userManager.GetUserAsync(User);
+
+            if (loggedUser == null)
+            {
+                await _signInManager.SignOutAsync(); // clear invalid login cookie
+                return RedirectToAction("Login", "Account"); // go back to login page
+            }
+
             List<SelectListItem> hobbyCategories = unitOfWork.hobbyCategory.GetAll().Select(x => new SelectListItem
             {
                 Text = x.Name,
@@ -50,6 +61,8 @@ namespace FriendlyRS1.Controllers
                 ProfileImage = loggedUser.ProfileImage,
                 HobbyCategories = hobbyCategories
             };
+
+            ViewData["UserId"] = loggedUser.Id;
 
             return View(userVM);
         }
@@ -208,6 +221,7 @@ namespace FriendlyRS1.Controllers
         {
             var loggedUser = await _userManager.GetUserAsync(User);
 
+            // ✅ This now loads posts with comments thanks to your repository change
             List<Post> posts = unitOfWork.Post.ConectionsPosts(loggedUser.Id, BATCH_SIZE, firstItem);
 
             List<ShowPostVM> testData = posts.OrderByDescending(x => x.CreatedDate).Select(x => new ShowPostVM
@@ -221,11 +235,25 @@ namespace FriendlyRS1.Controllers
                 Hobby = x.Hobby.Title,
                 DateTime = x.CreatedDate,
                 DateCreated = x.CreatedDate,
-                IsMe = loggedUser.Id != x.AuthorId ? false : true
+                IsMe = loggedUser.Id == x.AuthorId,
+
+                Comments = unitOfWork.Comment.GetCommentsByPostId(x.Id)
+                    .OrderBy(c => c.DateCreated)
+                    .Select(c => new CommentVM
+                    {
+                        Id = c.Id,
+                        AuthorId = c.AuthorId,
+                        AuthorName = c.Author.ToString(),
+                        Text = c.Text,
+                        DateCreated = c.DateCreated,
+                        DateUpdated = c.DateUpdated
+                    })
+                    .ToList()
             }).ToList();
 
             return View("LoadConnectionsPosts", testData);
         }
+
 
         public async Task<IActionResult> CountNotifications()
         {
@@ -285,7 +313,19 @@ namespace FriendlyRS1.Controllers
                 AuthorId = x.AuthorId,
                 Hobby = x.Hobby.Title,
                 DateCreated = x.CreatedDate,
-                IsMe = loggedUser.Id == x.AuthorId ? true : false
+                IsMe = loggedUser.Id == x.AuthorId ? true : false,
+                Comments = unitOfWork.Comment.GetCommentsByPostId(x.Id)
+                    .OrderBy(c => c.DateCreated)
+                    .Select(c => new CommentVM
+                    {
+                        Id = c.Id,
+                        AuthorId = c.AuthorId,
+                        AuthorName = c.Author.ToString(),
+                        Text = c.Text,
+                        DateCreated = c.DateCreated,
+                        DateUpdated = c.DateUpdated
+                    })
+                    .ToList()
             }).ToList();
 
 

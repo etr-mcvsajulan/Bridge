@@ -48,7 +48,7 @@ namespace FriendlyRS1.Controllers
                   new { user = tokenType ? user.Id.ToString() : user.Email, token = token },
                   protocol: Request.Scheme);
 
-            string msg = tokenType ? Constants.Messages.EmailConfirmation  : Constants.Messages.PasswordReset;
+            string msg = tokenType ? Constants.Messages.EmailConfirmation : Constants.Messages.PasswordReset;
 
             await _emailSender.SendEmailAsync(user.Email, "Bridge",
                 callbackUrl, msg);
@@ -95,6 +95,94 @@ namespace FriendlyRS1.Controllers
             }
             return View(model);
         }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ExternalLogin(string provider, string returnUrl = null)
+        {
+            var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Account", new { returnUrl });
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+            return Challenge(properties, provider);
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> ExternalLoginCallback(string returnUrl = null, string remoteError = null)
+        {
+            if (remoteError != null)
+            {
+                ModelState.AddModelError(string.Empty, $"Error from external provider: {remoteError}");
+                return RedirectToAction(nameof(Login));
+            }
+
+            var info = await _signInManager.GetExternalLoginInfoAsync();
+            if (info == null)
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            // Try to sign in with the external login
+            var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false);
+
+            if (result.Succeeded)
+            {
+                return RedirectToAction("Index", "Feed");
+            }
+
+            // If not succeeded, create/link user
+            var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+            if (email != null)
+            {
+                var user = await _userManager.FindByEmailAsync(email);
+                if (user == null)
+                {
+
+                    var genders = GetAllGenders();
+
+                    var defaultGender = genders
+                        .FirstOrDefault(g => g.GenderType == 'O');
+
+                    user = new ApplicationUser
+                    {
+                        UserName = email,
+                        Email = email,
+                        FirstName = info.Principal.FindFirstValue(ClaimTypes.GivenName),
+                        LastName = info.Principal.FindFirstValue(ClaimTypes.Surname),
+                        GenderId = 9,
+                        DateCreated = DateTime.Now,
+                        DateModified = DateTime.Now,
+                        ActiveAccount = true
+                    };
+
+                    var createResult = await _userManager.CreateAsync(user);
+
+                    if (createResult.Succeeded)
+                    {
+                        await _userManager.AddToRoleAsync(user, "User");
+
+                        await _userManager.AddClaimAsync(user, new Claim("FirstName", user.FirstName));
+                        await _userManager.AddClaimAsync(user, new Claim("Id", user.Id.ToString()));
+
+                    } else 
+                    {
+                        // show errors
+                        return RedirectToAction(nameof(Login));
+                    }
+                }
+
+                // Link login provider to user
+                await _userManager.AddLoginAsync(user, info);
+
+                // Sign in
+                await _signInManager.SignInAsync(user, isPersistent: false);
+                return RedirectToAction("Index", "Feed");
+            }
+
+            // If no email, fail
+            return RedirectToAction(nameof(Login));
+        }
+
+
         public string LockoutExpirationMessage(ApplicationUser user)
         {
             int expirationMinutes = user.LockoutEnd.Value.Minute - DateTime.Now.Minute;

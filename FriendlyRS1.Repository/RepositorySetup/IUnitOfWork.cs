@@ -20,6 +20,7 @@ namespace FriendlyRS1.Repository.RepostorySetup
         public PostRepository Post { get; }
         public BellNotificationRepository BellNotification { get; }
         public SkillRepository Skill { get; }
+        public CommentRepository Comment { get; }
 
         int Complete();
     }

@@ -119,6 +119,19 @@ namespace FriendlyRS1.Repository.RepostorySetup
             }
         }
 
+        private CommentRepository commentRepository;
+        public CommentRepository Comment
+        {
+            get
+            {
+                if (this.commentRepository == null)
+                {
+                    this.commentRepository = new CommentRepository(context);
+                }
+                return commentRepository;
+            }
+        }
+
         public UnitOfWork(ApplicationDbContext context)
         {
             this.context = context;
@@ -132,6 +145,7 @@ namespace FriendlyRS1.Repository.RepostorySetup
         {
             return context.SaveChanges();
         }
+
         //protected virtual void Dispose(bool disposing)
         //{
         //    if (!this.disposed)

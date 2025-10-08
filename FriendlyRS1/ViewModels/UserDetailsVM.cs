@@ -16,13 +16,13 @@ namespace FriendlyRS1.ViewModels
         [Required(ErrorMessage = Constants.Messages.Required)]
         [Display(Name = "First Name")]
         [StringLength(20, MinimumLength = 2, ErrorMessage = "{0} should contain minimum {2} letters")]
-        [RegularExpression(@"^[a-zA-Z]+$", ErrorMessage = "Use letters only please")]
+        [RegularExpression(@"^[A-Za-z]+(?: [A-Za-z]+)*$", ErrorMessage = "Use letters and single spaces only please")]
         public string FirstName { get; set; }
 
         [Required(ErrorMessage = Constants.Messages.Required)]
         [Display(Name = "Last Name")]
         [StringLength(20, MinimumLength = 2, ErrorMessage = "{0} should contain minimum {2} letters")]
-        [RegularExpression(@"^[a-zA-ZĐđŠšŽžČčĆć]+$", ErrorMessage = Constants.Messages.LettersOnly)]
+        [RegularExpression(@"^[A-Za-z]+(?: [A-Za-z]+)*$", ErrorMessage = "Use letters and single spaces only please")]
         public string LastName { get; set; }
         public string Email { get; set; }
         [Display(Name = "Birth date")]

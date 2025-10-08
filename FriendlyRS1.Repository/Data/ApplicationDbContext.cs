@@ -43,6 +43,18 @@ namespace FriendlyRS1.Repository
                       .HasForeignKey(f => f.StatusId)
                       .OnDelete(DeleteBehavior.Cascade); // Cascade is okay here
             });
+
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.Post)
+                .WithMany(p => p.Comments)
+                .HasForeignKey(c => c.PostId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.Author)
+                .WithMany()
+                .HasForeignKey(c => c.AuthorId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
 
         public DbSet<Hobby> Hobby { get; set; }
@@ -58,5 +70,6 @@ namespace FriendlyRS1.Repository
         public DbSet<NotificationType> NotificationType { get; set; }
         public DbSet<BellNotification> BellNotification { get; set; }
         public DbSet<Skill> Skill { get; set; }
+        public DbSet<Comment> Comment { get; set; }
     }
 }

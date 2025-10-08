@@ -75,6 +75,17 @@ namespace FriendlyRS1
                 config.AccessDeniedPath = new PathString("/Account/AccessDenied");
             });
 
+            services.AddAuthentication()
+                .AddGoogle(options =>
+                {
+                    IConfigurationSection googleAuthNSection =
+                        Configuration.GetSection("Authentication:Google");
+
+                    options.ClientId = googleAuthNSection["ClientId"];
+                    options.ClientSecret = googleAuthNSection["ClientSecret"];
+                    options.SignInScheme = IdentityConstants.ExternalScheme;
+                });
+
             services.AddTransient<IEmailSender, SendGridEmailSender>();
             services.AddSingleton<IUserConnectionManager, UserConnectionManager>();
             services.Configure<EmailSenderOptions>(Configuration);
@@ -139,6 +150,7 @@ namespace FriendlyRS1
                 endpoints.MapHub<ChatHub>("/chathub");
                 //endpoints.MapHub<NotificationHub>("/NotificationHub");
                 endpoints.MapHub<NotificationHubUser>("/NotificationUserHub");
+                endpoints.MapHub<CommentHub>("/commentHub");
             });
         }
     }
