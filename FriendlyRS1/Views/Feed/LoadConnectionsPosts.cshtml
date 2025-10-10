@@ -1,4 +1,4 @@
-﻿@model List<ShowPostVM>
+﻿    @model List<ShowPostVM>
 @{
     ViewData["Title"] = "LoadPosts";
     Layout = null;
@@ -26,7 +26,7 @@
                     </div>
                     <div class="timeline-body">
                         <div>
-                            <div class="d-flex flex-column shadow rounded bg-white p-3 mb-3" >
+                            <div class="d-flex flex-column shadow rounded bg-white p-3 mb-3">
                                 <div class=" d-flex justify-content-between mb-2">
                                     <div class="d-flex">
                                         @if (item.ProfileImage != null)
@@ -56,12 +56,12 @@
                                             <i class="fas fa-ellipsis-h fa-lg text-secondary three-dots" onclick="TogglePostMenu(@item.Id)"></i>
                                             <div class="post-menu shadow rounded bg-light" id="@($"postMenu{item.Id}")">
                                                 <div class="text-secondary">Options</div>
-                                                <hr style="width:100%; margin: .6em 0px"/>
+                                                <hr style="width:100%; margin: .6em 0px" />
                                                 <div class="mb-1">
                                                     <button data-toggle="modal" data-target="#exampleModal" class="btn btn-warning w-100" onclick="EditPost(@item.Id)">Edit Post</button>
                                                 </div>
                                                 <div>
-                                                    <button  class="btn btn-danger w-100" onclick="DeletePost(@item.Id)">Delete Post</button>
+                                                    <button class="btn btn-danger w-100" onclick="DeletePost(@item.Id)">Delete Post</button>
                                                 </div>
                                             </div>
 
@@ -87,7 +87,7 @@
                                 <div class="d-flex">
                                     <button class="flex-grow-1 btn btn-light mr-2">
                                         <i class="far fa-handshake text-secondary fa-lg"></i>
-                                        <span class="text-secondary">Interested</span>
+                                        <span class="text-secondary">Interestedsss</span>
                                     </button>
 
                                     <button class="flex-grow-1 btn btn-light" onclick="toggleCommentBox(@item.Id)">
@@ -101,10 +101,20 @@
                                     <div id="@($"commentsList{item.Id}")">
                                         @foreach (var c in item.Comments)
                                         {
-                                            <div id="comment-@c.Id" class="border rounded p-2 mb-2 bg-light">
-                                                <strong>@c.AuthorName:</strong>
-                                                <p class="mb-0">@c.Text</p>
-                                                <small class="text-muted">@c.DateCreated.ToString("g")</small>
+                                            <div id="comment-@c.Id" class="border rounded p-2 mb-2 bg-light d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <div>sdads</div>
+                                                    <strong>@c.AuthorName:</strong>
+                                                    <p class="mb-0">@c.Text</p>
+                                                    <small class="text-muted">@c.DateCreated</small>
+                                                </div>
+                                                @if (item.AuthorId == c.AuthorId)
+                                                {
+                                                    <div class="ml-2">
+                                                        <i class="fas fa-edit text-secondary mr-2" style="cursor:pointer;" title="Edit" onclick="editComment(@item.Id, @c.Id)"></i>
+                                                        <i class="fas fa-trash text-secondary" style="cursor:pointer;" title="Delete" onclick="deleteComment(@item.Id, @c.Id)"></i>
+                                                    </div>
+                                                }
                                             </div>
                                         }
                                     </div>
@@ -117,6 +127,7 @@
                                 </div>
 
 
+
                             </div>
                         </div>
                     </div>
@@ -126,15 +137,14 @@
     </div>
 
 }
-
 <script>
-    // ✅ Use global variable but prevent redeclaration
+    // 🟢 Global connection (prevent reinit)
     window.commentConnection = window.commentConnection || null;
 
     $(document).ready(function () {
         $("time.timeago").timeago();
 
-        // 🟢 Initialize SignalR connection only once
+        // 🟢 Initialize SignalR only once
         if (!window.commentConnection) {
             window.commentConnection = new signalR.HubConnectionBuilder()
                 .withUrl("/commentHub")
@@ -143,82 +153,65 @@
             window.commentConnection
                 .start()
                 .then(() => {
-                    console.log("✅ SignalR connected");
+                    console.log("✅ Connected to SignalR");
 
-                    // Join all posts currently on the page
+                    // Join groups for all posts
                     $(".tab-content").each(function () {
                         const postId = $(this).attr("id").replace("post", "");
                         window.commentConnection.invoke("JoinPostGroup", parseInt(postId));
+                        console.log("Joined post group:", postId);
                     });
                 })
                 .catch(err => console.error("SignalR connection error:", err));
 
-            // 🧹 Remove any old handlers
-            window.commentConnection.off("ReceiveComment");
-            window.commentConnection.off("UpdateComment");
-            window.commentConnection.off("DeleteComment");
+            // 🧹 Cleanup old listeners
+            window.commentConnection.off("ReloadComments");
 
-            // 🟢 Receive comment
-            window.commentConnection.on("ReceiveComment", (postId, authorName, text, dateCreated, commentId) => {
-                appendComment(postId, authorName, text, dateCreated, commentId);
-            });
-
-            // 🟡 Update comment
-            window.commentConnection.on("UpdateComment", (postId, commentId, text, dateCreated) => {
-                const commentEl = $(`#comment-${commentId}`);
-                if (commentEl.length) {
-                    commentEl.find("p").text(text);
-                    commentEl.find("small").text(new Date(dateCreated).toLocaleString());
-                }
-            });
-
-            // 🔴 Delete comment
-            window.commentConnection.on("DeleteComment", (postId, commentId) => {
-                $(`#comment-${commentId}`).remove();
+            // ♻️ SignalR reload trigger
+            window.commentConnection.on("ReloadComments", (postId) => {
+                console.log("♻️ Reloading comments for post:", postId);
+                loadComments(postId);
             });
         }
     });
 
-    // ✅ Make functions globally available (not inside jQuery ready)
+    // ✅ Toggle comment section
     function toggleCommentBox(postId) {
         const section = $(`#commentSection${postId}`);
         section.toggleClass("d-none");
-
-        if (!section.hasClass("d-none")) {
-            loadComments(postId);
-        }
+        if (!section.hasClass("d-none")) loadComments(postId);
     }
 
+    // ✅ Load comments from server (used by SignalR reload)
     function loadComments(postId) {
-        $.get(`/Comment/GetComments/${postId}`)
-            .done(comments => {
-                const list = $(`#commentsList${postId}`);
-                list.empty();
-
-                // Sort comments ascending by date
-                comments.sort((a, b) => new Date(a.dateCreated) - new Date(b.dateCreated));
-
-                comments.forEach(c => {
-                    appendComment(postId, c.authorName || "Anonymous", c.text, c.dateCreated, c.id);
-                });
+        $.get(`/Comment/GetComments?postId=${postId}`)
+            .done(res => {
+                if (res.success && res.comments) {
+                    const list = $(`#commentsList${postId}`);
+                    list.empty();
+                    res.comments.forEach(c => {
+                        list.append(`
+                                            <div id="comment-${c.id}" class="border rounded p-2 mb-2 bg-light d-flex justify-content-between align-items-start">
+                                            <div>
+                                                        <strong>${c.authorName || "Anonymous"}:</strong>
+                                                        <p class="mb-0">${c.text}</p>
+                                                        <small class="text-muted">${c.dateCreated}</small>
+                                            </div>
+                                                ${c.isMe ? `
+                                            <div class="ml-2">
+                                                    <i class="fas fa-edit text-secondary mr-2" style="cursor:pointer;" title="Edit" onclick="editComment(${postId}, ${c.id})"></i>
+                                                    <i class="fas fa-trash text-secondary" style="cursor:pointer;" title="Delete" onclick="deleteComment(${postId}, ${c.id})"></i>
+                                            </div>
+                                            ` : ""}
+                                        </div>
+                                    `);
+                    });
+                }
             })
             .fail(() => console.error("❌ Failed to load comments."));
     }
 
-    function appendComment(postId, authorName, text, dateCreated, id = null) {
-        if (id && $(`#comment-${id}`).length > 0) return; // prevent duplicates
-
-        const safeId = id ? `id="comment-${id}"` : "";
-        const html = `
-                <div ${safeId} class="border rounded p-2 mb-2 bg-light">
-                    <strong>${authorName}:</strong>
-                    <p class="mb-0">${text}</p>
-                    <small class="text-muted">${new Date(dateCreated).toLocaleString()}</small>
-                </div>
-            `;
-        $(`#commentsList${postId}`).append(html);
-    }
-
+    // ✅ Add comment (broadcast triggers SignalR reload)
     function addComment(postId) {
         const input = $(`#newComment${postId}`);
         const text = input.val().trim();
@@ -227,13 +220,49 @@
         $.post(`/Comment/AddComment`, { postId, text })
             .done(res => {
                 if (res.success) {
-                    input.val("");
+                    input.val(""); // clear
+                    // 🚫 Do NOT reload manually — SignalR will broadcast reload
                 } else {
                     alert("Failed to add comment.");
                 }
             })
             .fail(() => alert("❌ Failed to post comment."));
     }
+
+    // ✏️ Edit comment
+    function editComment(postId, commentId) {
+        const commentEl = $(`#comment-${commentId}`);
+        const currentText = commentEl.find("p").text();
+        const newText = prompt("Edit your comment:", currentText);
+        if (newText === null || newText.trim() === "") return;
+
+        $.post(`/Comment/UpdateComment`, { id: commentId, text: newText.trim() })
+            .done(res => {
+                if (res.success) {
+                    // 🚫 No manual reload — SignalR will trigger ReloadComments
+                } else {
+                    alert("Failed to update comment.");
+                }
+            })
+            .fail(() => alert("❌ Failed to update comment."));
+    }
+
+    // 🗑 Delete comment
+    function deleteComment(postId, commentId) {
+        if (!confirm("Are you sure you want to delete this comment?")) return;
+
+        $.post(`/Comment/DeleteComment`, { id: commentId })
+            .done(res => {
+                if (res.success) {
+                    // 🚫 No manual reload — SignalR will trigger ReloadComments
+                } else {
+                    alert("Failed to delete comment.");
+                }
+            })
+            .fail(() => alert("❌ Failed to delete comment."));
+    }
 </script>
+
+
 
 

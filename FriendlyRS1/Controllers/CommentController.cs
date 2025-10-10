@@ -1,13 +1,16 @@
 ﻿using DataLayer.EntityModels;
 using FriendlyRS1.Repository.RepostorySetup;
 using FriendlyRS1.SignalRChat.Hubs;
+using FriendlyRS1.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace FriendlyRS1.Controllers
 {
@@ -26,6 +29,33 @@ namespace FriendlyRS1.Controllers
             _userManager = userManager;
             this.unitOfWork = unitOfWork;
             _hubContext = hubContext;
+        }
+
+        public async Task<IActionResult> GetComments(int postId)
+        {
+            try
+            {
+                var loggedUser = await _userManager.GetUserAsync(User);
+                List<CommentVM> Comments = unitOfWork.Comment.GetCommentsByPostId(postId)
+                    .OrderBy(c => c.DateCreated)
+                    .Select(c => new CommentVM
+                    {
+                        Id = c.Id,
+                        AuthorId = c.AuthorId,
+                        AuthorName = c.Author.ToString(),
+                        Text = c.Text,
+                        DateCreated = c.DateCreated.ToString("M/d/yyyy, hh:mm tt"),
+                        DateUpdated = c.DateUpdated.ToString("M/d/yyyy, hh:mm tt"),
+                        IsMe = loggedUser.Id == c.AuthorId
+                    })
+            .ToList();
+
+                return Ok(new { success = true, comments = Comments });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
 
         public async Task<IActionResult> AddComment(int postId, string text)
@@ -51,24 +81,17 @@ namespace FriendlyRS1.Controllers
                 unitOfWork.Comment.Add(comment);
                 unitOfWork.Complete();
 
-                // Broadcast new comment
-                await _hubContext.Clients.Group($"post_{postId}").SendAsync(
-                    "ReceiveComment",
-                    postId,
-                    author,              
-                    comment.Text,               
-                    comment.DateCreated.ToString("o"),
-                    comment.Id                  
-                );
+                await _hubContext.Clients.Group($"post_{postId}")
+                    .SendAsync("ReloadComments", postId);
 
-               return Ok(new
-               {
-                   success = true,
-                   author,
-                   text = comment.Text,
-                   date = comment.DateCreated.ToString("o"),
-                   commentId = comment.Id
-               });
+                return Ok(new
+                {
+                    success = true,
+                    author,
+                    text = comment.Text,
+                    date = comment.DateCreated.ToString("o"),
+                    commentId = comment.Id
+                });
             }
             catch (Exception ex)
             {
@@ -83,20 +106,15 @@ namespace FriendlyRS1.Controllers
                 return NotFound();
 
             comment.Text = text;
-            comment.DateCreated = DateTime.Now;
+            comment.DateUpdated = DateTime.Now;
 
             try
             {
                 unitOfWork.Complete();
 
                 // Broadcast update
-                await _hubContext.Clients.All.SendAsync(
-                    "UpdateComment",
-                    comment.PostId,
-                    comment.Id,
-                    comment.Text,
-                    comment.DateCreated.ToString("o")
-                );
+                await _hubContext.Clients.Group($"post_{comment.PostId}")
+                    .SendAsync("ReloadComments", comment.PostId);
 
                 return Ok(new { success = true, comment });
             }
@@ -118,11 +136,8 @@ namespace FriendlyRS1.Controllers
                 unitOfWork.Complete();
 
                 // Broadcast deletion
-                await _hubContext.Clients.All.SendAsync(
-                    "DeleteComment",
-                    comment.PostId,
-                    comment.Id
-                );
+                await _hubContext.Clients.Group($"post_{comment.PostId}")
+                    .SendAsync("ReloadComments", comment.PostId);
 
                 return Ok(new { success = true });
             }

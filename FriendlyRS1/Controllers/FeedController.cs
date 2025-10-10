@@ -245,8 +245,9 @@ namespace FriendlyRS1.Controllers
                         AuthorId = c.AuthorId,
                         AuthorName = c.Author.ToString(),
                         Text = c.Text,
-                        DateCreated = c.DateCreated,
-                        DateUpdated = c.DateUpdated
+                        DateCreated = c.DateCreated.ToString("M/d/yyyy, hh:mm tt"),
+                        DateUpdated = c.DateUpdated.ToString("M/d/yyyy, hh:mm tt"),
+                        IsMe = loggedUser.Id == c.AuthorId
                     })
                     .ToList()
             }).ToList();
@@ -322,8 +323,9 @@ namespace FriendlyRS1.Controllers
                         AuthorId = c.AuthorId,
                         AuthorName = c.Author.ToString(),
                         Text = c.Text,
-                        DateCreated = c.DateCreated,
-                        DateUpdated = c.DateUpdated
+                        DateCreated = c.DateCreated.ToString("M/d/yyyy, hh:mm tt"),
+                        DateUpdated = c.DateUpdated.ToString("M/d/yyyy, hh:mm tt"),
+                        IsMe = loggedUser.Id == c.AuthorId
                     })
                     .ToList()
             }).ToList();

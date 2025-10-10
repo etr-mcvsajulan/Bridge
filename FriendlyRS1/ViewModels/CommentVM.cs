@@ -9,8 +9,8 @@ namespace FriendlyRS1.ViewModels
         public string Text { get; set; }
         public string AuthorName { get; set; }
         public byte[] ProfileImage { get; set; }
-        public DateTime DateCreated { get; set; }
-        public DateTime DateUpdated { get; set; }
+        public string DateCreated { get; set; }
+        public string DateUpdated { get; set; }
         public bool IsMe { get; set; }
     }
 }
