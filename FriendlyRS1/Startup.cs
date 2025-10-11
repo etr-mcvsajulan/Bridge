@@ -151,6 +151,8 @@ namespace FriendlyRS1
                 //endpoints.MapHub<NotificationHub>("/NotificationHub");
                 endpoints.MapHub<NotificationHubUser>("/NotificationUserHub");
                 endpoints.MapHub<CommentHub>("/commentHub");
+
+                endpoints.MapRazorPages();
             });
         }
     }
