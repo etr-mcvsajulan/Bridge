@@ -55,6 +55,26 @@ namespace FriendlyRS1.Repository
                 .WithMany()
                 .HasForeignKey(c => c.AuthorId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Chat>(entity =>
+            {
+                entity.Property(c => c.MessageText)
+                      .HasMaxLength(2000)
+                      .IsUnicode(true);
+
+                entity.Property(c => c.ImageData)
+                      .HasColumnType("varbinary(max)");
+
+                entity.HasOne(c => c.Sender)
+                      .WithMany()
+                      .HasForeignKey(c => c.SenderId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(c => c.Receiver)
+                      .WithMany()
+                      .HasForeignKey(c => c.ReceiverId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
         }
 
         public DbSet<Hobby> Hobby { get; set; }
@@ -71,5 +91,6 @@ namespace FriendlyRS1.Repository
         public DbSet<BellNotification> BellNotification { get; set; }
         public DbSet<Skill> Skill { get; set; }
         public DbSet<Comment> Comment { get; set; }
+        public DbSet<Chat> Chat { get; set; }
     }
 }

@@ -14,7 +14,7 @@
 <div>
     @foreach (var user in @Model.Users)
     {
-        <a asp-controller="UserProfile" asp-action="Index" asp-route-id="@user.Id" class="d-flex p-2 align-content-center">
+        <a asp-controller="Chat" asp-action="Index" asp-route-id="@user.Id" class="d-flex p-2 align-content-center">
             <div>
 
                 @if (user.ProfileImage != null)

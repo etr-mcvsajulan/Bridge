@@ -132,6 +132,19 @@ namespace FriendlyRS1.Repository.RepostorySetup
             }
         }
 
+        private ChatRepository chatRepository;
+        public ChatRepository Chat
+        {
+            get
+            {
+                if (this.chatRepository == null)
+                {
+                    this.chatRepository = new ChatRepository(context);
+                }
+                return chatRepository;
+            }
+        }
+
         public UnitOfWork(ApplicationDbContext context)
         {
             this.context = context;

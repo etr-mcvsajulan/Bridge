@@ -1,0 +1,37 @@
+﻿@model List<FriendlyRS1.ViewModels.ChatVM>
+
+<div class="chat-panel p-3" id="chatPanel">
+    @if (Model != null && Model.Any())
+    {
+        @foreach (var msg in Model)
+        {
+            var isMe = msg.IsMe || (User?.Identity?.Name == msg.SenderName);
+            <div class="d-flex mb-3 @(isMe ? "justify-content-end" : "justify-content-start")">
+                <div class="chat-bubble p-2 rounded-3 @(isMe ? "bg-primary text-white" : "bg-light text-dark")" style="max-width: 70%;">
+                    @if (!string.IsNullOrEmpty(msg.MessageText))
+                    {
+                        <div>@msg.MessageText</div>
+                    }
+
+                    @if (msg.ImageData != null)
+                    {
+                        <img src="data:image/*;base64,@(Convert.ToBase64String(msg.ImageData))"
+                             alt="Image message"
+                             class="img-fluid rounded mt-2"
+                             style="max-width: 100%; height: auto;" />
+                    }
+
+                    <div class="text-end mt-1">
+                        <small class="text-muted" style="font-size: 0.75rem;">
+                            @msg.SentTimeFormatted
+                        </small>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="text-center text-muted p-3">No messages yet</div>
+    }
+</div>

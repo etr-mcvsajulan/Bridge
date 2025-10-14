@@ -64,5 +64,34 @@ namespace FriendlyRS1.Controllers
             return View(model);
         }
 
+        public async Task<IActionResult> GetChatPeople(int id, string q, int firstItem = 0)
+        {
+
+            UserVM model = new UserVM();
+            if (!string.IsNullOrEmpty(q))
+            {
+                List<ApplicationUser> users = _unitOfWork.User.GetUsersByName(q, firstItem, take);
+
+                model = new UserVM
+                {
+                    Users = users.Select(x => new UserVM.Row
+                    {
+                        Id = x.Id,
+                        FirstName = x.FirstName,
+                        LastName = x.LastName,
+                        ProfileImage = x.ProfileImage,
+                        IsMe = x.Id == id || id == 0 ? true : false
+                    }).ToList()
+                };
+            }
+
+            if ((model.Users == null || model.Users.Count == 0) && firstItem > take)
+            {
+                return new EmptyResult();
+            }
+
+            return View(model);
+        }
+
     }
 }

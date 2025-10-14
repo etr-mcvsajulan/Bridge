@@ -1,0 +1,31 @@
+﻿@model List<ChatVM>
+
+@if (Model.Any())
+{
+    <ul class="list-group list-group-flush">
+        @foreach (var chat in Model)
+        {
+            <li asp-controller="Chat" asp-action="Index" asp-route-id="@chat.ReceiverId" class="list-group-item chat-item d-flex align-items-center" data-id="@chat.ReceiverId" style="cursor:pointer;">
+                @if (@chat.ReceiverProfileImage != null)
+                {
+                    <img src="data:image/*;base64,@(Convert.ToBase64String(chat.ReceiverProfileImage))" class="rounded-circle me-2 image" width="45" height="45">
+                }
+                else
+                {
+                    <img src="/avatar.png" class="rounded-circle me-3 image" width="45" height="45">
+                }
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between">
+                        <strong>@chat.ReceiverName</strong>
+                        <small class="text-muted">@chat.SentTimeFormatted</small>
+                    </div>
+                    <small class="text-muted text-truncate d-block">@chat.MessageText</small>
+                </div>
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <div class="p-3 text-muted text-center">No recent chats</div>
+}

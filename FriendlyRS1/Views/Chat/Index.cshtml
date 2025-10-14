@@ -1,0 +1,228 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout1.cshtml";
+    var chatList = ViewData["ChatList"] as List<FriendlyRS1.ViewModels.ChatVM>;
+}
+
+<style>
+    .chat-container {
+        height: calc(100vh - 80px);
+        background-color: #fff;
+        border: 1px solid #ddd;
+        display: flex;
+        flex-direction: row;
+    }
+
+    /* Sidebar */
+    .chat-sidebar {
+        width: 100%;
+        max-width: 350px;
+        border-right: 1px solid #ccc;
+        background-color: #f8f9fa;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.3s ease-in-out;
+        position: relative;
+    }
+
+    .chat-search {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        position: relative;
+    }
+
+        .chat-search input {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            padding: 8px 12px;
+            outline: none;
+        }
+
+    .chat-list {
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .chat-item {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+        text-decoration: none;
+        color: #000;
+        transition: background 0.2s;
+        cursor: pointer;
+    }
+
+        .chat-item:hover {
+            background-color: #e9ecef;
+        }
+
+    .chat-avatar {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 10px;
+    }
+
+    .chat-item-details {
+        flex: 1;
+    }
+
+    .chat-item-name {
+        font-weight: 600;
+        font-size: 15px;
+    }
+
+    .chat-item-text {
+        color: #666;
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Chat panel */
+    .chat-main {
+        flex: 1;
+        background-color: #fafafa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease-in-out;
+        position: relative;
+    }
+
+    .empty-chat {
+        text-align: center;
+        color: #777;
+    }
+
+        .empty-chat img {
+            width: 150px;
+            margin-bottom: 15px;
+            opacity: 0.7;
+        }
+
+</style>
+
+<div class="chat-container">
+    <!-- Sidebar -->
+    <div class="chat-sidebar p-0">
+        <div class="chat-search">
+            <input type="text" id="chat_searchInput" placeholder="Search user..." autocomplete="off" />
+            <div id="chat_searchDiv">
+                <div id="chat_searchResult">
+                </div>
+                <a id="chat_searchMore" class="search-more" href="/Search/Index/?q=">Search</a>
+            </div>
+        </div>
+
+        <div class="chat-list" id="chat_chatList">
+
+        </div>
+    </div>
+
+    <!-- Main Chat -->
+    <div class="chat-main" id="chat_chatMain">
+        <div class="empty-chat text-center">
+            <img src="/chat-placeholder.png" alt="Chat" />
+            <h5>Select a chat to start messaging</h5>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+
+            // === EXISTING SEARCH SCRIPTS (DO NOT TOUCH) ===
+            const searchInput = $("#chat_searchInput");
+            const searchDiv = $("#chat_searchDiv");
+            const searchResult = $("#chat_searchResult");
+            const searchMore = $("#chat_searchMore");
+
+            searchInput.on("focus input", function () {
+                searchDiv.show();
+                let term = searchInput.val().trim();
+                if (term.length === 0) {
+                    searchMore.hide();
+                } else {
+                    searchMore.show().text("Search more " + term);
+                }
+            });
+
+            $(document).click(function (e) {
+                if (!$(e.target).closest("#chat_searchInput, #chat_searchDiv").length) {
+                    searchDiv.hide();
+                }
+            });
+
+            searchInput.on("keyup", function () {
+                let term = searchInput.val().trim();
+                if (term.length === 0) {
+                    searchMore.hide();
+                    return;
+                }
+
+                $.ajax({
+                    url: '/Chat/GetPeople',
+                    type: 'POST',
+                    data: { q: term },
+                    success: function (res) {
+                        if (res && res.length) {
+                            searchResult.html(res);
+                        }
+                        searchMore.show()
+                            .attr("href", "/Chat/SearchPeople/?q=" + term)
+                            .text("Search more " + term);
+                    }
+                });
+            });
+
+            // === EXISTING MOBILE CHAT SECTION (KEEP IT) ===
+            const chatMain = $("#chat_chatMain");
+            $(".chat-item").click(function () {
+                const name = $(this).data("name");
+                chatMain.html(`
+                            <div class="container p-3">
+                                <button class="back-btn" id="chat_backBtn">&larr; Back</button>
+                                <h5 class="text-center mb-4">${name}</h5>
+                                <div class="border rounded p-3 bg-white shadow-sm">
+                                    <p><em>Chat with ${name} will appear here...</em></p>
+                                </div>
+                            </div>
+                        `);
+                chatMain.addClass("active");
+
+                $("#chat_backBtn").click(function () {
+                    chatMain.removeClass("active");
+                });
+            });
+
+            // === 🟢 NEW: Function to reload ChatList dynamically ===
+            function loadChatList() {
+                $.get("/Chat/ChatList", function (html) {
+                    $("#chat_chatList").html(html);
+                });
+            }
+
+            // Load on page start
+            loadChatList();
+
+            // Optional: Reload every 30 seconds
+            setInterval(loadChatList, 30000);
+
+            // Expose if needed for manual refresh
+            window.loadChatList = loadChatList;
+        });
+
+        // Function to open chat from sidebar
+        function openChat(id) {
+            $.get(`/Chat/Index/${id}`, function (html) {
+                $("#chat_chatMain").html(html);
+            });
+        }
+    </script>
+}

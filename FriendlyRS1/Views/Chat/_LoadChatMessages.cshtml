@@ -1,0 +1,73 @@
+﻿@model List<ChatVM>
+
+@{
+    var receiverId = ViewData["ReceiverId"];
+    var receiverName = ViewData["ReceiverName"];
+    var receiverImage = ViewData["ReceiverImage"];
+}
+
+<div class="chat-messages d-flex flex-column h-100">
+    <!-- Header -->
+    <div class="border-bottom p-3 d-flex align-items-center bg-light">
+        <img src="@receiverImage" class="rounded-circle me-2" width="40" height="40" />
+        <h6 class="mb-0">@receiverName</h6>
+    </div>
+
+    <!-- Messages -->
+    <div id="messageContainer" class="flex-grow-1 p-3" style="overflow-y:auto;">
+        @foreach (var msg in Model)
+        {
+            if (msg.IsMe)
+            {
+                <div class="d-flex justify-content-end mb-2">
+                    <div class="p-2 px-3 bg-primary text-white rounded-3" style="max-width:65%;">
+                        @msg.MessageText
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="d-flex justify-content-start mb-2">
+                    <div class="p-2 px-3 bg-light rounded-3" style="max-width:65%;">
+                        @msg.MessageText
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <!-- Footer -->
+    <div class="border-top p-3 bg-light">
+        <form id="sendForm" class="d-flex">
+            <input type="hidden" id="receiverId" value="@receiverId" />
+            <input type="text" id="messageText" class="form-control me-2" placeholder="Type a message..." autocomplete="off" />
+            <button class="btn btn-primary">Send</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            const messageContainer = $("#messageContainer");
+            const receiverId = $("#receiverId").val();
+
+            $("#sendForm").on("submit", function (e) {
+                e.preventDefault();
+                const message = $("#messageText").val().trim();
+                if (!message) return;
+
+                $.ajax({
+                    url: "/Chat/SendMessage",
+                    method: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({ ReceiverId: receiverId, MessageText: message }),
+                    success: function () {
+                        // reload messages without reloading page
+                        $("#chatMainContainer").load(`/Chat/LoadChatMessages/${receiverId}`);
+                    }
+                });
+            });
+        });
+    </script>
+}

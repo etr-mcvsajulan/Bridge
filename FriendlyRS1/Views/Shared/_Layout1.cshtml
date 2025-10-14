@@ -217,7 +217,9 @@
                     </li>
                     <li class="text-primary font-weight-bold px-lg-3 px-1"> @(((ClaimsIdentity)User.Identity).FindFirst("FirstName").Value)</li>
                     <li data-toggle="tooltip" title="Messages" class="px-lg-3 px-1">
-                        <i class="far fa-comment fa-2x text-primary bar-icon"></i>
+                        <a asp-controller="Chat" asp-action="Index" style="text-decoration:none;">
+                            <i class="far fa-comment fa-2x text-primary bar-icon"></i>
+                        </a>
                     </li>
                     <li id="notif" data-toggle="tooltip" title="Notifications" class="px-lg-3 px-1">
                         <span class="fa-stack" data-count="0" id="notif-count">
