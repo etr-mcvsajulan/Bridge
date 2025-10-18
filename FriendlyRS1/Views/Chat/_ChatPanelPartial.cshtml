@@ -15,7 +15,7 @@
         @if (chatMateImage != null)
         {
             <img src="data:image/*;base64,@(Convert.ToBase64String(chatMateImage))"
-                 alt="User" class="rounded-circle me-2"
+                 alt="User" class="rounded-circle"
                  style="width:45px;height:45px;object-fit:cover;">
         }
         else
@@ -34,7 +34,7 @@
     <div id="chatBody" class="chat-body flex-grow-1 p-3 overflow-auto" style="background-color:#f9f9f9;">
         @foreach (var msg in Model)
         {
-            <div class="d-flex mb-3 @(msg.IsMe ? "justify-content-end" : "justify-content-start") align-items-end">
+            <div class="d-flex mb-3 @(msg.IsMe ? "justify-content-end" : "justify-content-start") align-items-center">
                 @if (!msg.IsMe)
                 {
                     <img src="/avatar.png" class="rounded-circle me-2" style="width:35px;height:35px;object-fit:cover;">
@@ -70,6 +70,9 @@
         const receiverId = '@chatMateId';
         const currentUserId = '@currentUserId';
         const $chatBody = $('#chatBody');
+
+        // 🟢 Scroll to bottom by default
+        $chatBody.scrollTop($chatBody[0].scrollHeight);
 
         // 🟢 Initialize SignalR only once
         if (!window.chatConnection) {
