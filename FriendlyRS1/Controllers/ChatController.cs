@@ -39,8 +39,21 @@ namespace FriendlyRS1.Controllers
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null) return RedirectToAction("Login", "Account");
 
+            var chatList = await GetChatList();
+
+            ViewData["ChatList"] = chatList;
+
+            List<ChatVM>? chatMessages = null;
+
             if (id != null)
             {
+                var chatMate = unitOfWork.User.Find(id ?? 0);
+
+
+                ViewData["ChatMateId"] = chatMate?.Id;
+                ViewData["ChatMateName"] = $"{chatMate?.FirstName} {chatMate?.LastName}";
+                ViewData["ChatMateProfileImage"] = chatMate?.ProfileImage;
+
                 var messages = unitOfWork.Chat.GetAll()
                     .Where(x =>
                         (x.SenderId == currentUser.Id && x.ReceiverId == id) ||
@@ -48,7 +61,7 @@ namespace FriendlyRS1.Controllers
                     .OrderBy(x => x.SentDate)
                     .ToList();
 
-                var chatMessages = messages.Select(m => new ChatVM
+                chatMessages = messages.Select(m => new ChatVM
                 {
                     Id = m.Id,
                     SenderId = m.SenderId,
@@ -57,49 +70,54 @@ namespace FriendlyRS1.Controllers
                     ImageData = m.ImageData,
                     SentDate = m.SentDate,
                     SentTimeFormatted = m.SentDate.ToLocalTime().ToString("hh:mm tt"),
-                    IsRead = m.IsRead
+                    IsRead = m.IsRead,
+                    IsMe = currentUser.Id == m.SenderId,
                 }).ToList();
 
-                ViewData["ReceiverId"] = id;
-                return PartialView("_ChatPanelPartial", chatMessages);
+                ViewData["MessageList"] = chatMessages;
             }
 
-            return View("Index");
+            return View();
         }
 
-        public async Task<IActionResult> ChatList()
+        public async Task<List<ChatListVM>> GetChatList()
         {
             var currentUser = await _userManager.GetUserAsync(User);
-            if (currentUser == null) return RedirectToAction("Login", "Account");
-
-            // Sidebar: list of recent chatmates
             var chats = unitOfWork.Chat.GetAll()
                 .Where(x => x.SenderId == currentUser.Id || x.ReceiverId == currentUser.Id)
                 .OrderByDescending(x => x.SentDate)
                 .ToList();
 
+            // Group by the other user and select the last message
             var chatList = chats
                 .GroupBy(x => x.SenderId == currentUser.Id ? x.ReceiverId : x.SenderId)
                 .Select(g =>
                 {
                     var lastMessage = g.OrderByDescending(x => x.SentDate).First();
-                    var chatMateId = lastMessage.SenderId == currentUser.Id
+
+                    // Determine the other user's ID
+                    var otherUserId = lastMessage.SenderId == currentUser.Id
                         ? lastMessage.ReceiverId
                         : lastMessage.SenderId;
 
-                    return new ChatVM
-                    {
-                        ReceiverId = chatMateId,
-                        ReceiverName = lastMessage.Receiver.FirstName.ToString() + " " + lastMessage.Receiver.LastName.ToString(),
-                        ReceiverProfileImage = lastMessage.Receiver.ProfileImage,
-                        MessageText = lastMessage.MessageText,
-                        SentDate = lastMessage.SentDate,
-                        SentTimeFormatted = lastMessage.SentDate.ToLocalTime().ToString("hh:mm tt"),
-                        IsRead = lastMessage.IsRead
-                    };
-                }).ToList();
+                    // Fetch the other user's details using unitOfWork
+                    var otherUser = unitOfWork.User.Find(otherUserId);
 
-            return PartialView("_LoadChatList", chatList);
+                    return new ChatListVM
+                    {
+                        UserId = otherUser?.Id ?? 0,
+                        Name = otherUser != null
+                            ? otherUser.FirstName + " " + otherUser.LastName
+                            : "Unknown User",
+                        ProfileImage = otherUser?.ProfileImage,
+                        LastMessage = lastMessage.MessageText ?? string.Empty,
+                        LastMessageDate = lastMessage.SentDate
+                    };
+                })
+                .OrderByDescending(x => x.LastMessageDate)
+                .ToList();
+
+            return chatList;
         }
 
         public async Task<IActionResult> SearchPeople(string q = "")
@@ -115,8 +133,7 @@ namespace FriendlyRS1.Controllers
             return View("SearchPeople", obj);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> SendMessage([FromBody] ChatVM model)
+        public async Task<IActionResult> SendMessage(int ReceiverId, string MessageText)
         {
             var sender = await _userManager.GetUserAsync(User);
             if (sender == null) return Unauthorized();
@@ -124,9 +141,9 @@ namespace FriendlyRS1.Controllers
             var chat = new Chat
             {
                 SenderId = sender.Id,
-                ReceiverId = model.ReceiverId,
-                MessageText = model.MessageText,
-                ImageData = model.ImageData,
+                ReceiverId = ReceiverId,
+                MessageText = MessageText,
+                ImageData = null,
                 SentDate = DateTime.UtcNow,
                 IsRead = false
             };
@@ -136,19 +153,23 @@ namespace FriendlyRS1.Controllers
 
             var formattedDate = chat.SentDate.ToLocalTime().ToString("hh:mm tt");
 
-            // Push to receiver and sender (so both see new message)
-            await _hubContext.Clients.Users(
-                model.ReceiverId.ToString(),
-                sender.Id.ToString()
-            ).SendAsync("ReceiveMessage", new
-            {
-                senderId = sender.Id,
-                receiverId = model.ReceiverId,
-                messageText = chat.MessageText,
-                sentDate = formattedDate
-            });
+            var senderUserId = sender.Id.ToString();
+            var receiverUserId = ReceiverId.ToString();
 
-            return Ok();
+            await _hubContext.Clients.Users(senderUserId, receiverUserId)
+                .SendAsync("ReceiveMessage", new
+                {
+                    senderId = sender.Id,
+                    receiverId = chat.ReceiverId,
+                    messageText = chat.MessageText,
+                    imageData = chat.ImageData,
+                    sentDate = formattedDate
+                });
+
+            await _hubContext.Clients.Users(senderUserId, receiverUserId)
+                .SendAsync("UpdateChatList");
+
+            return Ok(new { success = true });
         }
 
         public async Task<IActionResult> GetPeople(int id, string q, int firstItem = 0)
@@ -179,6 +200,12 @@ namespace FriendlyRS1.Controllers
 
             return View(model);
 
+        }
+
+        public async Task<IActionResult> GetChatListPartial()
+        {
+            var chatList = await GetChatList();
+            return PartialView("_ChatListPartial", chatList);
         }
     }
 }

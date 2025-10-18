@@ -12,5 +12,11 @@ namespace FriendlyRS1.SignalRChat.Hubs
         {
             await base.OnConnectedAsync();
         }
+
+        public async Task JoinUserGroup(string userId)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{userId}");
+        }
+
     }
 }

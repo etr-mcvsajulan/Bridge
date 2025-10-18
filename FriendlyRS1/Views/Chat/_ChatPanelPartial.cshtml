@@ -1,37 +1,146 @@
 ﻿@model List<FriendlyRS1.ViewModels.ChatVM>
+@using System.Security.Claims
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
 
-<div class="chat-panel p-3" id="chatPanel">
-    @if (Model != null && Model.Any())
-    {
+@{
+    var chatMateName = ViewData["ChatMateName"] as string;
+    var chatMateImage = ViewData["ChatMateProfileImage"] as byte[];
+    var chatMateId = ViewData["ChatMateId"];
+    var currentUserId = HttpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+}
+
+<div class="chat-panel border rounded bg-white d-flex flex-column" style="height:100%;">
+    <!-- Header -->
+    <div class="chat-header d-flex align-items-center border-bottom p-3 bg-light">
+        @if (chatMateImage != null)
+        {
+            <img src="data:image/*;base64,@(Convert.ToBase64String(chatMateImage))"
+                 alt="User" class="rounded-circle me-2"
+                 style="width:45px;height:45px;object-fit:cover;">
+        }
+        else
+        {
+            <img src="/avatar.png" alt="User" class="rounded-circle me-2"
+                 style="width:45px;height:45px;object-fit:cover;">
+        }
+
+        <div>
+            <div class="fw-bold">@chatMateName</div>
+            <div class="text-muted small">Active now</div>
+        </div>
+    </div>
+
+    <!-- Body -->
+    <div id="chatBody" class="chat-body flex-grow-1 p-3 overflow-auto" style="background-color:#f9f9f9;">
         @foreach (var msg in Model)
         {
-            var isMe = msg.IsMe || (User?.Identity?.Name == msg.SenderName);
-            <div class="d-flex mb-3 @(isMe ? "justify-content-end" : "justify-content-start")">
-                <div class="chat-bubble p-2 rounded-3 @(isMe ? "bg-primary text-white" : "bg-light text-dark")" style="max-width: 70%;">
-                    @if (!string.IsNullOrEmpty(msg.MessageText))
-                    {
-                        <div>@msg.MessageText</div>
-                    }
+            <div class="d-flex mb-3 @(msg.IsMe ? "justify-content-end" : "justify-content-start") align-items-end">
+                @if (!msg.IsMe)
+                {
+                    <img src="/avatar.png" class="rounded-circle me-2" style="width:35px;height:35px;object-fit:cover;">
+                }
 
-                    @if (msg.ImageData != null)
-                    {
-                        <img src="data:image/*;base64,@(Convert.ToBase64String(msg.ImageData))"
-                             alt="Image message"
-                             class="img-fluid rounded mt-2"
-                             style="max-width: 100%; height: auto;" />
-                    }
-
+                <div class="p-2 rounded-3" style="max-width:70%;">
+                    <div>@msg.MessageText</div>
                     <div class="text-end mt-1">
-                        <small class="text-muted" style="font-size: 0.75rem;">
-                            @msg.SentTimeFormatted
-                        </small>
+                        <small class="text-muted" style="font-size:0.75rem;">@msg.SentTimeFormatted</small>
                     </div>
                 </div>
+
+                @if (msg.IsMe)
+                {
+                    <img src="/avatar.png" class="rounded-circle ms-2" style="width:35px;height:35px;object-fit:cover;">
+                }
             </div>
         }
-    }
-    else
-    {
-        <div class="text-center text-muted p-3">No messages yet</div>
-    }
+    </div>
+
+    <!-- Input -->
+    <div class="chat-input border-top p-3 bg-light d-flex align-items-center">
+        <input type="text" class="form-control me-2" id="newMessage" placeholder="Type a message..." />
+        <button class="btn btn-primary" onclick="sendChatMessage()">Send</button>
+    </div>
 </div>
+
+<script>
+    // 🟢 Global chat connection (prevent multiple instances)
+    window.chatConnection = window.chatConnection || null;
+
+    $(document).ready(function () {
+        const receiverId = '@chatMateId';
+        const currentUserId = '@currentUserId';
+        const $chatBody = $('#chatBody');
+
+        // 🟢 Initialize SignalR only once
+        if (!window.chatConnection) {
+            window.chatConnection = new signalR.HubConnectionBuilder()
+                .withUrl("/chathub")
+                .build();
+
+            window.chatConnection
+                .start()
+                .then(() => {
+                    console.log("✅ Connected to ChatHub");
+                    const currentUserId = '@currentUserId';
+                    window.chatConnection.invoke("JoinUserGroup", currentUserId);
+                })
+                .catch(err => console.error("SignalR connection error:", err));
+
+            // 🧹 Cleanup old listeners
+            window.chatConnection.off("ReceiveMessage");
+
+            // ♻️ Real-time message handler
+            window.chatConnection.on("ReceiveMessage", (data) => {
+                const { senderId, receiverId: recId, messageText, sentDate } = data;
+                const receiverId = '@chatMateId';
+                const currentUserId = '@currentUserId';
+                const $chatBody = $('#chatBody');
+
+                // Only show if this conversation involves me
+                if (recId == receiverId || senderId == receiverId) {
+                    const isMe = senderId == currentUserId;
+                    const msgDiv = `
+                <div class="d-flex mb-3 ${isMe ? 'justify-content-end' : 'justify-content-start'} align-items-end">
+                    ${!isMe ? `<img src="/avatar.png" class="rounded-circle me-2" style="width:35px;height:35px;object-fit:cover;">` : ''}
+                    <div class="p-2 rounded-3" style="max-width:70%;">
+                        <div>${messageText}</div>
+                        <div class="text-end mt-1">
+                            <small class="text-muted" style="font-size:0.75rem;">${sentDate}</small>
+                        </div>
+                    </div>
+                    ${isMe ? `<img src="/avatar.png" class="rounded-circle ms-2" style="width:35px;height:35px;object-fit:cover;">` : ''}
+                </div>`;
+                    $chatBody.append(msgDiv);
+                    $chatBody.scrollTop($chatBody[0].scrollHeight);
+                }
+            });
+
+            // 🟢 When someone sends or receives a new message, update the sidebar
+            window.chatConnection.on("UpdateChatList", function () {
+                $('.chat-list').fadeTo(200, 0.5);
+                $.get('/Chat/GetChatListPartial', function (html) {
+                    $('.chat-list').html(html).fadeTo(200, 1);
+                });
+            });
+        }
+    });
+
+    // ✅ Send message (relies on SignalR broadcast)
+    function sendChatMessage() {
+        const input = $('#newMessage');
+        const text = input.val().trim();
+        if (!text) return alert("Please enter a message.");
+
+        const receiverId = '@chatMateId';
+
+        $.post(`/Chat/SendMessage`, { ReceiverId: receiverId, MessageText: text })
+            .done(res => {
+                if (res.success) {
+                    input.val("");
+                } else {
+                    alert("Failed to send message.");
+                }
+            })
+            .fail(() => alert("❌ Failed to send message."));
+    }
+</script>

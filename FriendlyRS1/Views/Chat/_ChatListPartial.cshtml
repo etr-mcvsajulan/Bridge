@@ -1,0 +1,30 @@
+﻿@model List<FriendlyRS1.ViewModels.ChatListVM>
+
+@if (Model != null && Model.Any())
+{
+    <ul class="list-group list-group-flush">
+        @foreach (var chat in Model)
+        {
+            <li class="list-group-item d-flex align-items-center">
+                <a asp-controller="Chat" asp-action="Index" asp-route-id="@chat.UserId"
+                   class="d-flex text-decoration-none text-dark w-100">
+
+                    <img src="@(chat.ProfileImage != null ? $"data:image/*;base64,{Convert.ToBase64String(chat.ProfileImage)}" : "/avatar.png")"
+                         class="rounded-circle me-3" width="45" height="45" />
+
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between">
+                            <strong>@chat.Name</strong>
+                            <small class="text-muted">@chat.LastMessageDate.ToLocalTime().ToString("hh:mm tt")</small>
+                        </div>
+                        <small class="text-muted text-truncate d-block">@chat.LastMessage</small>
+                    </div>
+                </a>
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <div class="p-3 text-muted text-center">No recent chats</div>
+}

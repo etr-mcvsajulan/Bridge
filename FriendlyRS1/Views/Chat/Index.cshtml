@@ -1,57 +1,93 @@
 ﻿@{
     Layout = "~/Views/Shared/_Layout1.cshtml";
-    var chatList = ViewData["ChatList"] as List<FriendlyRS1.ViewModels.ChatVM>;
+    var chatList = ViewData["ChatList"] as List<FriendlyRS1.ViewModels.ChatListVM>;
+    var messageList = ViewData["MessageList"] as List<FriendlyRS1.ViewModels.ChatVM>;
 }
 
 <style>
-    .chat-container {
-        height: calc(100vh - 80px);
-        background-color: #fff;
-        border: 1px solid #ddd;
+    .chat-wrapper {
+        height: calc(100vh - 100px);
+        background: #fff;
+        border-radius: 10px;
+        overflow: hidden;
         display: flex;
-        flex-direction: row;
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
     }
 
-    /* Sidebar */
+    /* === SIDEBAR === */
     .chat-sidebar {
-        width: 100%;
-        max-width: 350px;
-        border-right: 1px solid #ccc;
-        background-color: #f8f9fa;
+        width: 320px;
+        border-right: 1px solid #ddd;
+        background: #f8f9fa;
         display: flex;
         flex-direction: column;
-        transition: all 0.3s ease-in-out;
-        position: relative;
     }
 
-    .chat-search {
+    .chat-search-container {
         padding: 10px;
         border-bottom: 1px solid #ddd;
+        background-color: #fff;
         position: relative;
     }
 
-        .chat-search input {
-            width: 100%;
-            border: 1px solid #ccc;
-            border-radius: 20px;
-            padding: 8px 12px;
-            outline: none;
+    #chat_searchInput {
+        width: 100%;
+        border: 1px solid #ccc;
+        border-radius: 25px;
+        padding: 8px 14px;
+        font-size: 14px;
+        outline: none;
+    }
+
+    #chat_searchDiv {
+        display: none;
+        position: absolute;
+        top: 50px;
+        left: 10px;
+        right: 10px;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 20;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    #chat_searchResult {
+        padding: 10px;
+    }
+
+    #chat_searchMore {
+        display: block;
+        text-align: center;
+        padding: 8px;
+        border-top: 1px solid #eee;
+        font-size: 13px;
+        color: #007bff;
+        text-decoration: none;
+    }
+
+        #chat_searchMore:hover {
+            text-decoration: underline;
         }
 
+    /* Chat list inside sidebar */
     .chat-list {
         flex: 1;
         overflow-y: auto;
+        padding: 5px 0;
     }
 
     .chat-item {
         display: flex;
         align-items: center;
-        padding: 10px;
+        padding: 10px 15px;
         border-bottom: 1px solid #eee;
         text-decoration: none;
         color: #000;
-        transition: background 0.2s;
         cursor: pointer;
+        transition: background-color 0.2s;
     }
 
         .chat-item:hover {
@@ -63,11 +99,12 @@
         height: 45px;
         border-radius: 50%;
         object-fit: cover;
-        margin-right: 10px;
+        margin-right: 12px;
     }
 
     .chat-item-details {
         flex: 1;
+        min-width: 0;
     }
 
     .chat-item-name {
@@ -83,146 +120,124 @@
         text-overflow: ellipsis;
     }
 
-    /* Chat panel */
+    /* === CHAT PANEL === */
     .chat-main {
         flex: 1;
-        background-color: #fafafa;
+        background: #fafafa;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-empty {
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.3s ease-in-out;
-        position: relative;
-    }
-
-    .empty-chat {
-        text-align: center;
+        flex: 1;
         color: #777;
+        text-align: center;
+        flex-direction: column;
     }
 
-        .empty-chat img {
+        .chat-empty img {
             width: 150px;
-            margin-bottom: 15px;
             opacity: 0.7;
+            margin-bottom: 10px;
         }
 
+    @@media (max-width: 768px) {
+        .chat-sidebar {
+            width: 100%;
+            max-width: none;
+        }
+
+        .chat-wrapper {
+            flex-direction: column;
+        }
+    }
 </style>
 
-<div class="chat-container">
-    <!-- Sidebar -->
-    <div class="chat-sidebar p-0">
-        <div class="chat-search">
-            <input type="text" id="chat_searchInput" placeholder="Search user..." autocomplete="off" />
-            <div id="chat_searchDiv">
-                <div id="chat_searchResult">
+
+<div class="container-fluid mt-3">
+    <div class="chat-wrapper">
+        <!-- Sidebar -->
+        <div class="chat-sidebar">
+            <div class="chat-search-container">
+                <input type="text" id="chat_searchInput" placeholder="Search user..." autocomplete="off" />
+                <div id="chat_searchDiv">
+                    <div id="chat_searchResult"></div>
+                    <a id="chat_searchMore" class="search-more" href="/Search/Index/?q=">Search</a>
                 </div>
-                <a id="chat_searchMore" class="search-more" href="/Search/Index/?q=">Search</a>
+            </div>
+
+            <div class="chat-list">
+                @await Html.PartialAsync("_ChatListPartial", chatList)
             </div>
         </div>
 
-        <div class="chat-list" id="chat_chatList">
-
-        </div>
-    </div>
-
-    <!-- Main Chat -->
-    <div class="chat-main" id="chat_chatMain">
-        <div class="empty-chat text-center">
-            <img src="/chat-placeholder.png" alt="Chat" />
-            <h5>Select a chat to start messaging</h5>
+        <!-- Main Chat Panel -->
+        <div class="chat-main" id="chat_chatMain">
+            @if (messageList != null)
+            {
+                @await Html.PartialAsync("_ChatPanelPartial", messageList)
+            }
+            else
+            {
+                <div class="chat-empty">
+                    <p>Select a conversation to start chatting</p>
+                </div>
+            }
         </div>
     </div>
 </div>
 
-@section Scripts {
-    <script>
-        $(function () {
 
-            // === EXISTING SEARCH SCRIPTS (DO NOT TOUCH) ===
-            const searchInput = $("#chat_searchInput");
-            const searchDiv = $("#chat_searchDiv");
-            const searchResult = $("#chat_searchResult");
-            const searchMore = $("#chat_searchMore");
+<script>
+    $(function () {
+        // === Search script (unchanged) ===
+        const searchInput = $("#chat_searchInput");
+        const searchDiv = $("#chat_searchDiv");
+        const searchResult = $("#chat_searchResult");
+        const searchMore = $("#chat_searchMore");
 
-            searchInput.on("focus input", function () {
-                searchDiv.show();
-                let term = searchInput.val().trim();
-                if (term.length === 0) {
-                    searchMore.hide();
-                } else {
-                    searchMore.show().text("Search more " + term);
-                }
-            });
-
-            $(document).click(function (e) {
-                if (!$(e.target).closest("#chat_searchInput, #chat_searchDiv").length) {
-                    searchDiv.hide();
-                }
-            });
-
-            searchInput.on("keyup", function () {
-                let term = searchInput.val().trim();
-                if (term.length === 0) {
-                    searchMore.hide();
-                    return;
-                }
-
-                $.ajax({
-                    url: '/Chat/GetPeople',
-                    type: 'POST',
-                    data: { q: term },
-                    success: function (res) {
-                        if (res && res.length) {
-                            searchResult.html(res);
-                        }
-                        searchMore.show()
-                            .attr("href", "/Chat/SearchPeople/?q=" + term)
-                            .text("Search more " + term);
-                    }
-                });
-            });
-
-            // === EXISTING MOBILE CHAT SECTION (KEEP IT) ===
-            const chatMain = $("#chat_chatMain");
-            $(".chat-item").click(function () {
-                const name = $(this).data("name");
-                chatMain.html(`
-                            <div class="container p-3">
-                                <button class="back-btn" id="chat_backBtn">&larr; Back</button>
-                                <h5 class="text-center mb-4">${name}</h5>
-                                <div class="border rounded p-3 bg-white shadow-sm">
-                                    <p><em>Chat with ${name} will appear here...</em></p>
-                                </div>
-                            </div>
-                        `);
-                chatMain.addClass("active");
-
-                $("#chat_backBtn").click(function () {
-                    chatMain.removeClass("active");
-                });
-            });
-
-            // === 🟢 NEW: Function to reload ChatList dynamically ===
-            function loadChatList() {
-                $.get("/Chat/ChatList", function (html) {
-                    $("#chat_chatList").html(html);
-                });
+        searchInput.on("focus input", function () {
+            searchDiv.show();
+            let term = searchInput.val().trim();
+            if (term.length === 0) {
+                searchMore.hide();
+            } else {
+                searchMore.show().text("Search more " + term);
             }
-
-            // Load on page start
-            loadChatList();
-
-            // Optional: Reload every 30 seconds
-            setInterval(loadChatList, 30000);
-
-            // Expose if needed for manual refresh
-            window.loadChatList = loadChatList;
         });
 
-        // Function to open chat from sidebar
-        function openChat(id) {
-            $.get(`/Chat/Index/${id}`, function (html) {
-                $("#chat_chatMain").html(html);
+        $(document).click(function (e) {
+            if (!$(e.target).closest("#chat_searchInput, #chat_searchDiv").length) {
+                searchDiv.hide();
+            }
+        });
+
+        searchInput.on("keyup", function () {
+            let term = searchInput.val().trim();
+            if (term.length === 0) {
+                searchMore.hide();
+                return;
+            }
+
+            $.ajax({
+                url: '/Chat/GetPeople',
+                type: 'POST',
+                data: { q: term },
+                success: function (res) {
+                    if (res && res.length) {
+                        searchResult.html(res);
+                    }
+                    searchMore.show()
+                        .attr("href", "/Chat/SearchPeople/?q=" + term)
+                        .text("Search more " + term);
+                }
             });
-        }
-    </script>
-}
+        });
+    });
+</script>
+
+<script src="~/lib/microsoft-signalr/signalr.js"></script>
