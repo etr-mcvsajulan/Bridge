@@ -75,7 +75,29 @@ namespace FriendlyRS1.Repository
                       .HasForeignKey(c => c.ReceiverId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
+
+            modelBuilder.Entity<Appointments>(entity =>
+            {
+                entity.HasOne(a => a.Author)
+                      .WithMany()
+                      .HasForeignKey(a => a.AuthorId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(a => a.Receiver)
+                      .WithMany()
+                      .HasForeignKey(a => a.ReceiverId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(a => a.Title)
+                      .HasMaxLength(200)
+                      .IsRequired();
+
+                entity.Property(a => a.Description)
+                      .HasMaxLength(500);
+            });
         }
+
+
 
         public DbSet<Hobby> Hobby { get; set; }
         public DbSet<HobbyCategory> HobbyCategory { get; set; }
@@ -92,5 +114,6 @@ namespace FriendlyRS1.Repository
         public DbSet<Skill> Skill { get; set; }
         public DbSet<Comment> Comment { get; set; }
         public DbSet<Chat> Chat { get; set; }
+        public DbSet<Appointments> Appointments { get; set; }
     }
 }

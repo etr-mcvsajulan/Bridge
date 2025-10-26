@@ -53,6 +53,7 @@ namespace FriendlyRS1.Controllers
                 ViewData["ChatMateId"] = chatMate?.Id;
                 ViewData["ChatMateName"] = $"{chatMate?.FirstName} {chatMate?.LastName}";
                 ViewData["ChatMateProfileImage"] = chatMate?.ProfileImage;
+                ViewData["LoggedProfileImage"] = currentUser?.ProfileImage;
 
                 var messages = unitOfWork.Chat.GetAll()
                     .Where(x =>
@@ -69,6 +70,8 @@ namespace FriendlyRS1.Controllers
                     MessageText = m.MessageText,
                     ImageData = m.ImageData,
                     SentDate = m.SentDate,
+                    SenderProfileImage = m.Sender.ProfileImage,
+                    ReceiverProfileImage = m.Receiver.ProfileImage,
                     SentTimeFormatted = m.SentDate.ToLocalTime().ToString("hh:mm tt"),
                     IsRead = m.IsRead,
                     IsMe = currentUser.Id == m.SenderId,

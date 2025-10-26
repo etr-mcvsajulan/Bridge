@@ -20,5 +20,8 @@ namespace DataLayer.EntityModels
         public NotificationType NotificationType { get; set; }
         public DateTime DateCreated { get; set; } = DateTime.Now;
         public bool IsRead { get; set; }
+        public string? RedirectController { get; set; }  
+        public string? RedirectAction { get; set; } 
+        public string? RedirectParam { get; set; }
     }
 }

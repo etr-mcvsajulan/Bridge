@@ -27,7 +27,10 @@ namespace FriendlyRS1.Repository.Repositories
                     IsRead = x.IsRead,
                     ActorId = x.ActorId,
                     NotificationTypeId = x.NotificationTypeId,
-                    NotifierId = x.NotifierId
+                    NotifierId = x.NotifierId,
+                    RedirectAction = x.RedirectAction,
+                    RedirectController = x.RedirectController,
+                    RedirectParam = x.RedirectParam
                 })
                 .OrderByDescending(x => x.DateCreated)
                 .Skip(skip)

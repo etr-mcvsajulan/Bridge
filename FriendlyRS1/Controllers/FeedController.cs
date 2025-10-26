@@ -115,7 +115,8 @@ namespace FriendlyRS1.Controllers
                     Latitude = model.Latitude,
                     Longitude = model.Longitude,
                     AuthorId = model.AuthorId,
-                    HobbyId = (int)model.HobbyId
+                    HobbyId = (int)model.HobbyId,
+                    Visibility = model.Visibility
                 };
                 _toastNotification.AddSuccessToastMessage(Constants.Messages.PostAdd);
                 unitOfWork.Post.Add(post);
@@ -125,6 +126,7 @@ namespace FriendlyRS1.Controllers
                 post = unitOfWork.Post.Get(x => x.Id == model.Id);
                 post.Text = model.PostText;
                 post.HobbyId = (int)model.HobbyId;
+                post.Visibility = model.Visibility;
                 post.ModifiedDate = DateTime.Now;
 
                 _toastNotification.AddSuccessToastMessage(Constants.Messages.SuccessEdit);
@@ -142,6 +144,7 @@ namespace FriendlyRS1.Controllers
                     ProfileImage = y.Author.ProfileImage,
                     DateCreated = y.CreatedDate,
                     Hobby = y.Hobby.Title,
+                    Visibility = y.Visibility,
                     Text = y.Text,
                     Id = y.Id,
                     IsMe = true
@@ -178,7 +181,10 @@ namespace FriendlyRS1.Controllers
                     Date = DateTimeCalculator.CalcTime(x.DateCreated),
                     IsRead = x.IsRead,
                     DateCreated = x.DateCreated,
-                    ActorId = x.Actor?.Id
+                    ActorId = x.Actor?.Id,
+                    RedirectAction = x?.RedirectAction,
+                    RedirectController = x?.RedirectController,
+                    RedirectParam = x?.RedirectParam
                 }).ToList();
                 return View(n);
 
@@ -215,7 +221,7 @@ namespace FriendlyRS1.Controllers
             return RedirectToAction("Index");
         }
 
-        private const int BATCH_SIZE = 5;
+        private const int BATCH_SIZE = 10;
         [HttpPost]
         public async Task<IActionResult> _TestData(string sortOrder, string searchString, int firstItem = 0)
         {
@@ -301,8 +307,8 @@ namespace FriendlyRS1.Controllers
 
         public async Task<IActionResult> GetMyPosts(int id, int firstItem = 0)
         {
-            List<Post> posts = unitOfWork.Post.GetMyPosts(id, firstItem, 5);
             var loggedUser = await _userManager.GetUserAsync(User);
+            List<Post> posts = unitOfWork.Post.GetMyPosts(id, loggedUser.Id, firstItem, 5);
 
             List<ShowPostVM> p = posts.Select(x => new ShowPostVM
             {

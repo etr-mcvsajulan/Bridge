@@ -21,6 +21,14 @@ namespace DataLayer.EntityModels
         [ForeignKey("HobbyId")]
         public Hobby Hobby { get; set; }
         public string Text { get; set; }
+        public PostVisibility Visibility { get; set; }
         public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
+    }
+
+    public enum PostVisibility
+    {
+        Public = 0,
+        Friends = 1,
+        OnlyMe = 2
     }
 }

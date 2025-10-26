@@ -317,9 +317,12 @@ namespace FriendlyRS1.Controllers
                 BellNotification notification = new BellNotification
                 {
                     ActorId = model.LoggedUserId,
-                    NotificationTypeId = 1,
+                    NotificationTypeId = (int)EnumNotificationType.FriendRequest,
                     NotifierId = model.UserProfileId,
-                    DateCreated = DateTime.Now
+                    DateCreated = DateTime.Now,
+                    RedirectAction = "Index",
+                    RedirectController = "UserProfile",
+                    RedirectParam = model.LoggedUserId.ToString()
                 };
                 unitOfWork.BellNotification.Add(notification);
 
@@ -366,9 +369,12 @@ namespace FriendlyRS1.Controllers
                 BellNotification notification = new BellNotification
                 {
                     ActorId = model.LoggedUserId,
-                    NotificationTypeId = 2,
+                    NotificationTypeId = (int)EnumNotificationType.FriendAccepted,
                     NotifierId = model.UserProfileId,
-                    DateCreated = DateTime.Now
+                    DateCreated = DateTime.Now,
+                    RedirectAction = "Index",
+                    RedirectController = "UserProfile",
+                    RedirectParam = model.LoggedUserId.ToString()
                 };
                 unitOfWork.BellNotification.Add(notification);
 

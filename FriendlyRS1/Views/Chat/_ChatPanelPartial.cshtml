@@ -5,6 +5,7 @@
 @{
     var chatMateName = ViewData["ChatMateName"] as string;
     var chatMateImage = ViewData["ChatMateProfileImage"] as byte[];
+    var loggedImage = ViewData["LoggedProfileImage"] as byte[];
     var chatMateId = ViewData["ChatMateId"];
     var currentUserId = HttpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
 }
@@ -16,12 +17,12 @@
         {
             <img src="data:image/*;base64,@(Convert.ToBase64String(chatMateImage))"
                  alt="User" class="rounded-circle"
-                 style="width:45px;height:45px;object-fit:cover;">
+                 width="45" height="45">
         }
         else
         {
             <img src="/avatar.png" alt="User" class="rounded-circle me-2"
-                 style="width:45px;height:45px;object-fit:cover;">
+                 width="45" height="45">
         }
 
         <div>
@@ -37,7 +38,10 @@
             <div class="d-flex mb-3 @(msg.IsMe ? "justify-content-end" : "justify-content-start") align-items-center">
                 @if (!msg.IsMe)
                 {
-                    <img src="/avatar.png" class="rounded-circle me-2" style="width:35px;height:35px;object-fit:cover;">
+                    <img src="@(msg.SenderProfileImage != null
+                ? $"data:image/*;base64,{Convert.ToBase64String(msg.SenderProfileImage)}"
+                : "/avatar.png")"
+                         class="rounded-circle me-3" width="45" height="45" />
                 }
 
                 <div class="p-2 rounded-3" style="max-width:70%;">
@@ -49,7 +53,10 @@
 
                 @if (msg.IsMe)
                 {
-                    <img src="/avatar.png" class="rounded-circle ms-2" style="width:35px;height:35px;object-fit:cover;">
+                    <img src="@(msg.SenderProfileImage != null
+                ? $"data:image/*;base64,{Convert.ToBase64String(msg.SenderProfileImage)}"
+                : "/avatar.png")"
+                         class="rounded-circle ms-3" width="45" height="45" />
                 }
             </div>
         }
@@ -92,6 +99,10 @@
             // 🧹 Cleanup old listeners
             window.chatConnection.off("ReceiveMessage");
 
+
+            const loggedProfileImage = '@(loggedImage != null ? Convert.ToBase64String(loggedImage) : "")';
+            const chatMateProfileImage = '@(chatMateImage != null ? Convert.ToBase64String(chatMateImage) : "")';
+
             // ♻️ Real-time message handler
             window.chatConnection.on("ReceiveMessage", (data) => {
                 const { senderId, receiverId: recId, messageText, sentDate } = data;
@@ -102,17 +113,21 @@
                 // Only show if this conversation involves me
                 if (recId == receiverId || senderId == receiverId) {
                     const isMe = senderId == currentUserId;
+
+                    const avatarSrc = isMe
+                        ? (loggedProfileImage ? `data:image/*;base64,${loggedProfileImage}` : '/avatar.png')
+                        : (chatMateProfileImage ? `data:image/*;base64,${chatMateProfileImage}` : '/avatar.png');
                     const msgDiv = `
-                <div class="d-flex mb-3 ${isMe ? 'justify-content-end' : 'justify-content-start'} align-items-end">
-                    ${!isMe ? `<img src="/avatar.png" class="rounded-circle me-2" style="width:35px;height:35px;object-fit:cover;">` : ''}
-                    <div class="p-2 rounded-3" style="max-width:70%;">
-                        <div>${messageText}</div>
-                        <div class="text-end mt-1">
-                            <small class="text-muted" style="font-size:0.75rem;">${sentDate}</small>
-                        </div>
-                    </div>
-                    ${isMe ? `<img src="/avatar.png" class="rounded-circle ms-2" style="width:35px;height:35px;object-fit:cover;">` : ''}
-                </div>`;
+                        <div class="d-flex mb-3 ${isMe ? 'justify-content-end' : 'justify-content-start'} align-items-center">
+                                            ${!isMe ? ` <img src="${avatarSrc}" class="rounded-circle me-2" width="45" height="45">` : ''}
+                            <div class="p-2 rounded-3" style="max-width:70%;">
+                                <div>${messageText}</div>
+                                <div class="text-end mt-1">
+                                    <small class="text-muted" style="font-size:0.75rem;">${sentDate}</small>
+                                </div>
+                            </div>
+                                            ${isMe ? ` <img src="${avatarSrc}" class="rounded-circle ms-2" width="45" height="45">` : ''}
+                        </div>`;
                     $chatBody.append(msgDiv);
                     $chatBody.scrollTop($chatBody[0].scrollHeight);
                 }
@@ -125,6 +140,13 @@
                     $('.chat-list').html(html).fadeTo(200, 1);
                 });
             });
+        }
+    });
+
+    $('#newMessage').on('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) { // Enter without Shift
+            e.preventDefault(); // prevent new line
+            sendChatMessage();
         }
     });
 

@@ -32,7 +32,7 @@
 @foreach (var notification in Model)
 {
     <div>
-        <a class="d-flex align-items-center py-2 not" asp-controller="UserProfile" asp-action="Index" asp-route-id="@notification.ActorId">
+        <a class="d-flex align-items-center py-2 not" asp-controller="@notification.RedirectController" asp-action="@notification.RedirectAction" asp-route-id="@notification.RedirectParam">
             @*<span class="time">@notification.DateCreated.ToString("HH:mm")</span>*@
 
             @if (notification.ProfileImage != null)

@@ -1,0 +1,45 @@
+﻿<div class="modal fade" id="addAppointmentModal" tabindex="-1" aria-labelledby="addAppointmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAppointmentModalLabel">Add Appointment</h5>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="apptTitle" class="form-label">Title</label>
+                    <input type="text" class="form-control" id="apptTitle" placeholder="Enter title">
+                </div>
+
+                <div class="mb-3">
+                    <label for="apptDescription" class="form-label">Description</label>
+                    <textarea class="form-control" id="apptDescription" rows="3" placeholder="Enter description"></textarea>
+                </div>
+
+                <div class="mb-3 position-relative">
+                    <label for="apptReceiver" class="form-label">Appointee</label>
+                    <input type="text" class="form-control" id="apptReceiver" placeholder="Search appointee..." autocomplete="off">
+                    <div id="receiverList" class="list-group position-absolute w-100"
+                         style="max-height: 200px; overflow-y: auto; display:none; z-index: 1051;"></div>
+                    <input type="hidden" id="apptReceiverId">
+                </div>
+
+                <div class="mb-3">
+                    <label for="apptStart" class="form-label">Start Time</label>
+                    <input type="datetime-local" class="form-control" id="apptStart">
+                </div>
+
+                <div class="mb-3">
+                    <label for="apptEnd" class="form-label">End Time</label>
+                    <input type="datetime-local" class="form-control" id="apptEnd">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button id="saveAppointmentBtn" class="btn btn-primary">
+                    <span class="spinner-border spinner-border-sm me-2 d-none" id="saveSpinner" role="status" aria-hidden="true"></span>
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,243 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout1.cshtml";
+}
+
+<style>
+    #calendar-container {
+        max-width: 1100px;
+        margin: 0 auto;
+        height: calc(100vh - 100px);
+    }
+
+    #calendar {
+        height: 100%;
+    }
+</style>
+
+<div class="container mt-3" id="calendar-container">
+    <div id="calendar"></div>
+</div>
+
+@Html.Partial("_AddAppointmentModal")
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/index.global.js"></script>
+
+<script>
+    $(function () {
+        var calendarEl = document.getElementById('calendar');
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            headerToolbar: {
+                left: 'prevYear,prev,next,nextYear today',
+                center: 'title',
+                right: 'dayGridMonth,dayGridWeek,dayGridDay'
+            },
+            navLinks: true,
+            editable: true,
+            selectable: true,
+            selectMirror: true,
+            dayMaxEvents: true,
+            height: '100%',
+            events: function (fetchInfo, successCallback, failureCallback) {
+                var startMonth = fetchInfo.start.getMonth() + 1;
+                var startYear = fetchInfo.start.getFullYear();
+
+                $.ajax({
+                    url: '/Appointment/GetAppointments',
+                    type: 'POST',
+                    data: JSON.stringify({ month: startMonth, year: startYear }),
+                    contentType: 'application/json; charset=utf-8',
+                    success: function (data) {
+                        var events = data.map(function (a) {
+                            let start = new Date(a.startTime);
+                            let end = a.endTime ? new Date(a.endTime) : new Date(a.startTime);
+
+                            const hasTime =
+                                start.getHours() !== 0 ||
+                                start.getMinutes() !== 0 ||
+                                end.getHours() !== 0 ||
+                                end.getMinutes() !== 0;
+
+                            if (!hasTime && start.toDateString() !== end.toDateString()) {
+                                end.setDate(end.getDate() + 1);
+                            }
+
+                            let color;
+                            switch (a.status) {
+                                case 0: color = 'orange'; break;
+                                case 1: color = 'green'; break;
+                                case 2: color = 'red'; break;
+                                case 3: color = 'blue'; break;
+                                default: color = 'gray'; break;
+                            }
+
+                            return {
+                                id: a.id,
+                                title: a.title + " (" + a.receiverName + ")",
+                                start: start.toISOString(),
+                                end: end.toISOString(),
+                                extendedProps: {
+                                    description: a.description,
+                                    author: a.authorName,
+                                    receiver: a.receiverName
+                                },
+                                color: color
+                            };
+                        });
+
+                        successCallback(events);
+                    },
+                    error: function () {
+                        failureCallback();
+                    }
+                });
+            },
+            eventClick: function (info) {
+                const start = info.event.start ? info.event.start.toLocaleString() : "N/A";
+                const end = info.event.end
+                    ? info.event.end.toLocaleString()
+                    : info.event.start
+                        ? info.event.start.toLocaleString()
+                        : "N/A";
+
+                alert(
+                    "Title: " + info.event.title + "\n" +
+                    "Start: " + start + "\n" +
+                    "End: " + end + "\n" +
+                    "Description: " + (info.event.extendedProps.description || "")
+                );
+            },
+            select: function (info) {
+                const startDate = new Date(info.start);
+                let endDate = new Date(info.end);
+
+                if (info.allDay) endDate.setDate(endDate.getDate() - 1);
+
+                const formatDateTimeLocal = (date) => {
+                    const offset = date.getTimezoneOffset();
+                    const local = new Date(date.getTime() - offset * 60 * 1000);
+                    return local.toISOString().slice(0, 16);
+                };
+
+                $("#apptStart").val(formatDateTimeLocal(startDate));
+                $("#apptEnd").val(formatDateTimeLocal(endDate));
+                $("#apptTitle, #apptDescription, #apptReceiver, #apptReceiverId").val('');
+
+                const modal = new bootstrap.Modal(document.getElementById('addAppointmentModal'));
+                modal.show();
+            }
+        });
+
+        calendar.render();
+
+        // Save Appointment
+        $("#saveAppointmentBtn").on("click", function () {
+            var btn = $(this);
+            var spinner = $("#saveSpinner");
+
+            // Disable button and show spinner
+            btn.prop("disabled", true);
+            spinner.removeClass("d-none");
+
+            var appointmentData = {
+                ReceiverId: parseInt($("#apptReceiverId").val()),
+                Title: $("#apptTitle").val(),
+                Description: $("#apptDescription").val(),
+                StartTime: $("#apptStart").val(),
+                EndTime: $("#apptEnd").val()
+            };
+
+            $.ajax({
+                url: '/Appointment/AddAppointment',
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify(appointmentData),
+                success: function (res) {
+                    if (res && res.success) {
+
+                        $("#addAppointmentModal").removeClass("show");
+
+                        $("body").removeClass("modal-open");
+                        $(".modal-backdrop").remove();
+
+                        $("#apptTitle, #apptDescription, #apptReceiver, #apptReceiverId").val('');
+                        $("#apptStart, #apptEnd").val('');
+
+                        calendar.refetchEvents();
+                    } else {
+                        alert("❌ Failed: " + (res.message || "Unknown error"));
+                    }
+                },
+                error: function () {
+                    alert("❌ Error saving appointment.");
+                },
+                complete: function () {
+                    btn.prop("disabled", false);
+                    spinner.addClass("d-none");
+                }
+            });
+        });
+
+
+        // Appointee Search
+        $("#apptReceiver").on("input", function () {
+            var query = $(this).val().trim();
+            var list = $("#receiverList");
+
+            if (query.length < 1) {
+                list.hide();
+                return;
+            }
+
+            $.ajax({
+                url: '/Appointment/GetConnections',
+                type: 'GET',
+                data: { searchString: query },
+                success: function (data) {
+                    list.empty();
+
+                    if (data.connections && data.connections.length > 0) {
+                        data.connections.forEach(function (conn) {
+                            var user = conn.user;
+                            var fullName = (user.firstName ?? "") + " " + (user.lastName ?? "");
+                            var profileImage = user.profileImage && user.profileImage.length > 0
+                                ? `data:image/*;base64,${user.profileImage}`
+                                : `/avatar.png`;
+
+                            var item = $(`<a href="#" class="list-group-item list-group-item-action d-flex align-items-center">
+                                            <img src="${profileImage}" class="rounded-circle me-2" width="32" height="32" />
+                                            <span>${fullName.trim() || "Unnamed User"}</span>
+                                        </a>`);
+
+                            item.on("click", function (e) {
+                                e.preventDefault();
+                                $("#apptReceiver").val(fullName.trim());
+                                $("#apptReceiverId").val(user.id);
+                                list.hide();
+                            });
+
+                            list.append(item);
+                        });
+
+                        list.show();
+                    } else {
+                        list.append('<div class="list-group-item text-muted">No results found</div>');
+                        list.show();
+                    }
+                },
+                error: function () {
+                    list.hide();
+                }
+            });
+        });
+
+        // Hide list on outside click
+        $(document).on("click", function (e) {
+            if (!$(e.target).closest("#apptReceiver, #receiverList").length) {
+                $("#receiverList").hide();
+            }
+        });
+    });
+</script>

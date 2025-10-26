@@ -20,26 +20,44 @@ namespace FriendlyRS1.Repository.Repositories
 
         public List<Post> ConectionsPosts(int id, int take, int skip)
         {
-            var list = new int[] { id }.AsQueryable();
+            var connectionIds =
+                (from f1 in _context.Friendship
+                 where f1.User2Id == id && f1.Status.Status == 1
+                 select f1.User1Id)
+                .Union(
+                 from f1 in _context.Friendship
+                 where f1.User1Id == id && f1.Status.Status == 1
+                 select f1.User2Id)
+                .Union(
+                 from u in _context.Users
+                 where u.Id == id
+                 select u.Id);
 
-            List<Post> posts = (from p in _context.Post.Select(p => new Post
-            {
-                Author = p.Author,
-                Hobby = p.Hobby,
-                Text = p.Text,
-                CreatedDate = p.CreatedDate,
-                AuthorId = p.AuthorId,
-                Id = p.Id
-            })
-                                join t2 in (from f1 in _context.Friendship where f1.User2Id == id && f1.Status.Status == 1 select f1.User1Id)
-                                            .Union(from f1 in _context.Friendship where f1.User1Id == id && f1.Status.Status == 1 select f1.User2Id)
-                                            .Union(from f1 in _context.Users where f1.Id == id select f1.Id)
-                                            on p.AuthorId equals t2
-                                select p)
-            .Skip(skip)
-            .Take(take)
-            .AsNoTracking()
-            .ToList();
+            var posts = (from p in _context.Post
+                         where
+                            // Public posts are always visible
+                            p.Visibility == PostVisibility.Public ||
+
+                            // Friend posts are visible only if author is a friend or self
+                            (p.Visibility == PostVisibility.Friends && connectionIds.Contains(p.AuthorId)) ||
+
+                            // OnlyMe posts are visible only to the author
+                            (p.Visibility == PostVisibility.OnlyMe && p.AuthorId == id)
+                         select new Post
+                         {
+                             Author = p.Author,
+                             Hobby = p.Hobby,
+                             Text = p.Text,
+                             CreatedDate = p.CreatedDate,
+                             AuthorId = p.AuthorId,
+                             Id = p.Id,
+                             Visibility = p.Visibility
+                         })
+                .OrderByDescending(p => p.CreatedDate)
+                .Skip(skip)
+                .Take(take)
+                .AsNoTracking()
+                .ToList();
 
             return posts;
         }
@@ -90,17 +108,20 @@ namespace FriendlyRS1.Repository.Repositories
             return Value * Math.PI / 180;
         }
 
-        public List<Post> GetMyPosts(int id, int skip, int take)
+        public List<Post> GetMyPosts(int id, int loggedUserId, int skip, int take)
         {
-            List<Post> p = _context.Post.Where(x => x.AuthorId == id).Select(p => new Post
-            {
-                Author = p.Author,
-                Hobby = p.Hobby,
-                Text = p.Text,
-                CreatedDate = p.CreatedDate,
-                AuthorId = p.AuthorId,
-                Id = p.Id
-            })
+            List<Post> p = _context.Post
+                .Where(x => x.AuthorId == id &&
+                        (x.Visibility != PostVisibility.OnlyMe || x.AuthorId == loggedUserId))
+                .Select(p => new Post
+                {
+                    Author = p.Author,
+                    Hobby = p.Hobby,
+                    Text = p.Text,
+                    CreatedDate = p.CreatedDate,
+                    AuthorId = p.AuthorId,
+                    Id = p.Id
+                })
             .OrderByDescending(x => x.CreatedDate)
             .Skip(skip)
             .Take(take)

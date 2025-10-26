@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DataLayer.EntityModels;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -18,5 +19,8 @@ namespace FriendlyRS1.ViewModels
         public string Latitude { get; set; }
         public int AuthorId { get; set; }
         public string HobbyTitle { get; set; }
+        [DisplayName("Post Visibility")]
+        [Required(ErrorMessage = "Please select visibility.")]
+        public PostVisibility Visibility { get; set; }
     }
 }

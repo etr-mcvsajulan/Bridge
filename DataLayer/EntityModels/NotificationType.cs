@@ -12,4 +12,11 @@ namespace DataLayer.EntityModels
         public string NotificationDescription { get; set; }
         public string NotificationMessage { get; set; }
     }
+
+    public enum EnumNotificationType
+    {
+        FriendRequest = 1,
+        FriendAccepted = 2,
+        AppointmentCreated = 3
+    }
 }
