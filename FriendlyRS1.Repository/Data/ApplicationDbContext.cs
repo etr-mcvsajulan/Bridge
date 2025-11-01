@@ -95,6 +95,15 @@ namespace FriendlyRS1.Repository
                 entity.Property(a => a.Description)
                       .HasMaxLength(500);
             });
+
+            modelBuilder.Entity<AppointmentPayment>(entity =>
+            {
+                entity.HasOne(p => p.Appointment)
+                      .WithOne(a => a.Payment)
+                      .HasForeignKey<AppointmentPayment>(p => p.AppointmentId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
         }
 
 
@@ -115,5 +124,6 @@ namespace FriendlyRS1.Repository
         public DbSet<Comment> Comment { get; set; }
         public DbSet<Chat> Chat { get; set; }
         public DbSet<Appointments> Appointments { get; set; }
+        public DbSet<AppointmentPayment> AppointmentPayment { get; set; }
     }
 }

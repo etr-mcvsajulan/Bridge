@@ -17,6 +17,10 @@ namespace DataLayer.EntityModels
     {
         FriendRequest = 1,
         FriendAccepted = 2,
-        AppointmentCreated = 3
+        AppointmentCreated = 3,
+        AppointmentAccepted = 4,
+        AppointmentCompleted = 5,
+        AppointmentCancelled = 6,
+        AppointmentPaid = 7
     }
 }

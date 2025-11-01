@@ -573,7 +573,14 @@ namespace FriendlyRS1.Controllers
                 {
                     foreach (var connectionId in connections)
                     {
-                        await _notificationUserHubContext.Clients.Client(connectionId).SendAsync("sendToUser", loggedUser.ToString(), model.NotificationMsg, model.LoggedUserId, loggedUser?.ProfileImage);
+                        await _notificationUserHubContext.Clients.Client(connectionId).SendAsync(
+                            "sendToUser", 
+                            loggedUser.ToString(), 
+                            model.NotificationMsg, 
+                            model.LoggedUserId, 
+                            loggedUser?.ProfileImage,
+                            $"/UserProfile/Index/{model.UserProfileId}"
+                            );
                     }
                 }
             }

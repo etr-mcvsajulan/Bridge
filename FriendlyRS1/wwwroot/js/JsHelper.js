@@ -79,7 +79,7 @@ function RespondRequest() {
 function EditPost(id) {
 
     $.ajax({
-        type:'GET',
+        type: 'GET',
         url: '/Feed/GetPost/' + id,
         success: function (data) {
             let postId = document.getElementById('PostId');
@@ -128,4 +128,113 @@ function RemovePostFromUI(id) {
     let post = $("#post" + id);
     post.remove();
 }
+
+function cancelAppointment(appointmentId) {
+    if (appointmentId == 0 || appointmentId == null)
+        return;
+
+    let url = '/Appointment/CancelAppointment';
+    if (confirm('Are you sure you want to cancel this appointment?') == true) {
+
+        $.ajax({
+            type: 'POST',
+            url: url,
+            data: { appointmentId },
+            success: function (res) {
+                if (res.success) {
+                    alert('Appointment cancelled successfully.');
+                    $('#appointmentDetailsModal').modal('hide');
+                    location.reload();
+                } else {
+                    alert('❌ Failed to cancel appointment.');
+                }
+            },
+            error: function () {
+                alert('❌ Error cancelling appointment.');
+            }
+        });
+    }
+}
+
+function acceptAppointment(appointmentId) {
+    if (appointmentId == 0 || appointmentId == null)
+        return;
+
+    let url = '/Appointment/AcceptAppointment';
+    if (confirm('Do you want to accept this appointment?') == true) {
+
+        $.ajax({
+            type: 'POST',
+            url: url,
+            data: { appointmentId },
+            success: function (res) {
+                if (res.success) {
+                    alert('Appointment accepted successfully.');
+                    $('#appointmentDetailsModal').modal('hide');
+                    location.reload();
+                } else {
+                    alert('❌ Failed to accept appointment.');
+                }
+            },
+            error: function () {
+                alert('❌ Error accepting appointment.');
+            }
+        });
+    }
+}
+
+function markAsPaid(appointmentId) {
+    if (appointmentId == 0 || appointmentId == null)
+        return;
+
+    let url = '/Appointment/MarkAsPaid';
+    if (confirm('Are you sure you want to mark this appointment as paid?') == true) {
+
+        $.ajax({
+            type: 'POST',
+            url: url,
+            data: { appointmentId },
+            success: function (res) {
+                if (res.success) {
+                    alert('Marked as paid successfully.');
+                    $('#appointmentDetailsModal').modal('hide');
+                    location.reload();
+                } else {
+                    alert('❌ Failed to update payment status.');
+                }
+            },
+            error: function () {
+                alert('❌ Error marking as paid.');
+            }
+        });
+    }
+}
+
+function completeAppointment(appointmentId) {
+    if (appointmentId == 0 || appointmentId == null)
+        return;
+
+    let url = '/Appointment/CompleteAppointment';
+    if (confirm('Are you sure you want to mark this appointment as completed?') == true) {
+
+        $.ajax({
+            type: 'POST',
+            url: url,
+            data: { appointmentId },
+            success: function (res) {
+                if (res.success) {
+                    alert('Appointment completed successfully.');
+                    $('#appointmentDetailsModal').modal('hide');
+                    location.reload();
+                } else {
+                    alert('❌ Failed to complete appointment.');
+                }
+            },
+            error: function () {
+                alert('❌ Error completing appointment.');
+            }
+        });
+    }
+}
+
 

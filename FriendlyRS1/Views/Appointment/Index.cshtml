@@ -12,13 +12,22 @@
     #calendar {
         height: 100%;
     }
+
+    .fc-day.selected {
+        background-color: rgba(0, 123, 255, 0.2);
+    }
 </style>
 
 <div class="container mt-3" id="calendar-container">
     <div id="calendar"></div>
 </div>
 
+<div id="notifications" class="notification"></div>
+
+<input type="hidden" id="signalRConnectionId" />
+
 @Html.Partial("_AddAppointmentModal")
+<div id="appointmentDetailsModalContainer"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -28,12 +37,14 @@
     $(function () {
         var calendarEl = document.getElementById('calendar');
 
+        var selectedDate = '@ViewBag.SelectedDate';
         var calendar = new FullCalendar.Calendar(calendarEl, {
             headerToolbar: {
                 left: 'prevYear,prev,next,nextYear today',
                 center: 'title',
                 right: 'dayGridMonth,dayGridWeek,dayGridDay'
             },
+            initialDate: selectedDate ? selectedDate : undefined,
             navLinks: true,
             editable: true,
             selectable: true,
@@ -41,13 +52,14 @@
             dayMaxEvents: true,
             height: '100%',
             events: function (fetchInfo, successCallback, failureCallback) {
-                var startMonth = fetchInfo.start.getMonth() + 1;
-                var startYear = fetchInfo.start.getFullYear();
+                var middleDate = new Date((fetchInfo.start.getTime() + fetchInfo.end.getTime()) / 2);
+                var currentMonth = middleDate.getMonth() + 1;
+                var currentYear = middleDate.getFullYear();
 
                 $.ajax({
                     url: '/Appointment/GetAppointments',
                     type: 'POST',
-                    data: JSON.stringify({ month: startMonth, year: startYear }),
+                    data: JSON.stringify({ month: currentMonth, year: currentYear }),
                     contentType: 'application/json; charset=utf-8',
                     success: function (data) {
                         var events = data.map(function (a) {
@@ -66,11 +78,12 @@
 
                             let color;
                             switch (a.status) {
-                                case 0: color = 'orange'; break;
-                                case 1: color = 'green'; break;
-                                case 2: color = 'red'; break;
-                                case 3: color = 'blue'; break;
-                                default: color = 'gray'; break;
+                                case 0: color = '#FFA500'; break; // Pending
+                                case 1: color = '#28a745'; break; // Accepted
+                                case 2: color = '#dc3545'; break; // Cancelled
+                                case 3: color = '#007bff'; break; // Completed
+                                case 4: color = '#6f42c1'; break; // Paid
+                                default: color = '#6c757d'; break; // Unknown
                             }
 
                             return {
@@ -95,19 +108,20 @@
                 });
             },
             eventClick: function (info) {
-                const start = info.event.start ? info.event.start.toLocaleString() : "N/A";
-                const end = info.event.end
-                    ? info.event.end.toLocaleString()
-                    : info.event.start
-                        ? info.event.start.toLocaleString()
-                        : "N/A";
+                const appointmentId = info.event.id;
 
-                alert(
-                    "Title: " + info.event.title + "\n" +
-                    "Start: " + start + "\n" +
-                    "End: " + end + "\n" +
-                    "Description: " + (info.event.extendedProps.description || "")
-                );
+                $.get('/Appointment/AppointmentDetailsPartial', { appointmentId }, function (html) {
+                    $('#appointmentDetailsModalContainer').html(html);
+                    console.log("Injected modal:", $('#appointmentDetailsModalContainer').html()); // 👀 check in DevTools
+
+                    const modalEl = document.getElementById('appointmentDetailsModal');
+                    if (modalEl) {
+                        const modal = new bootstrap.Modal(modalEl);
+                        modal.show();
+                    } else {
+                        console.error("❌ appointmentDetailsModal element not found");
+                    }
+                });
             },
             select: function (info) {
                 const startDate = new Date(info.start);
@@ -131,6 +145,17 @@
         });
 
         calendar.render();
+
+        if (selectedDate) {
+            // Format date as yyyy-mm-dd (FullCalendar uses this in data-date)
+            const formatted = new Date(selectedDate).toISOString().split("T")[0];
+
+            // Add `selected` class to the day cell
+            const dayCell = document.querySelector(`[data-date="${formatted}"]`);
+            if (dayCell) {
+                dayCell.classList.add("selected");
+            }
+        }
 
         // Save Appointment
         $("#saveAppointmentBtn").on("click", function () {
@@ -207,9 +232,9 @@
                                 : `/avatar.png`;
 
                             var item = $(`<a href="#" class="list-group-item list-group-item-action d-flex align-items-center">
-                                            <img src="${profileImage}" class="rounded-circle me-2" width="32" height="32" />
-                                            <span>${fullName.trim() || "Unnamed User"}</span>
-                                        </a>`);
+                                                <img src="${profileImage}" class="rounded-circle me-2" width="32" height="32" />
+                                                <span>${fullName.trim() || "Unnamed User"}</span>
+                                            </a>`);
 
                             item.on("click", function (e) {
                                 e.preventDefault();
@@ -240,4 +265,11 @@
             }
         });
     });
+
 </script>
+
+<script>
+    var userId = @ViewBag.UserId;
+</script>
+<script src="~/lib/microsoft-signalr/signalr.js"></script>
+<script src="~/js/usernotification.js"></script>

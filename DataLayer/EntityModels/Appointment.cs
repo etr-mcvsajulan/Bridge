@@ -41,5 +41,7 @@ namespace DataLayer.EntityModels
         public int Status { get; set; } 
 
         public DateTime CreatedAt { get; set; }
+
+        public virtual AppointmentPayment Payment { get; set; }
     }
 }

@@ -23,6 +23,7 @@ namespace FriendlyRS1.Repository.RepostorySetup
         public CommentRepository Comment { get; }
         public ChatRepository Chat { get; }
         public AppointmentRepository Appointment { get; }
+        public AppointmentPaymentRepository AppointmentPayment { get; }
 
         int Complete();
     }

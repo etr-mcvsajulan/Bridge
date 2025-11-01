@@ -158,6 +158,19 @@ namespace FriendlyRS1.Repository.RepostorySetup
             }
         }
 
+        private AppointmentPaymentRepository appointmentPaymentRepository;
+        public AppointmentPaymentRepository AppointmentPayment
+        {
+            get
+            {
+                if (this.appointmentPaymentRepository == null)
+                {
+                    this.appointmentPaymentRepository = new AppointmentPaymentRepository(context);
+                }
+                return appointmentPaymentRepository;
+            }
+        }
+
         public UnitOfWork(ApplicationDbContext context)
         {
             this.context = context;

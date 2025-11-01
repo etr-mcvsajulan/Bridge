@@ -8,7 +8,8 @@ namespace FriendlyRS1.ViewModels
         Pending = 0,
         Accepted = 1,
         Rejected = 2,
-        Completed = 3
+        Completed = 3,
+        Cancelled = 4
     }
 
     public class AppointmentVM
@@ -51,6 +52,8 @@ namespace FriendlyRS1.ViewModels
 
         [Display(Name = "Created At")]
         public DateTime CreatedAt { get; set; }
+
+        public PaymentStatus? PaymentStatus { get; set; }
 
         public string StatusText => Status.ToString();
         public string StartTimeFormatted => StartTime.ToString("yyyy-MM-dd HH:mm");

@@ -1,0 +1,87 @@
+﻿@model FriendlyRS1.ViewModels.AppointmentVM
+
+<div class="modal fade" id="appointmentDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">@Model.Title</h5>
+                <span class="badge
+                    @(Model.Status == AppointmentStatus.Pending ? "bg-warning text-dark" :
+                      Model.Status == AppointmentStatus.Accepted ? "bg-success" :
+                      Model.Status == AppointmentStatus.Cancelled ? "bg-danger" :
+                      Model.Status == AppointmentStatus.Completed ? "bg-primary" :
+                      Model.Status == AppointmentStatus.Rejected ? "bg-secondary" : "bg-dark")">
+                    @Model.Status
+                </span>
+            </div>
+
+            <div class="modal-body">
+                <p><strong>Description:</strong> @Model.Description</p>
+                <p><strong>Start:</strong> @Model.StartTime.ToString("f")</p>
+                <p><strong>End:</strong> @Model.EndTime.ToString("f")</p>
+                <p><strong>Appointer:</strong> @Model.AuthorName</p>
+                <p><strong>Appointee:</strong> @Model.ReceiverName</p>
+
+                @if (Model.Status == AppointmentStatus.Accepted)
+                {
+                    <hr />
+                    <p>
+                        <strong>Payment Status:</strong>
+                        @Html.Raw(Model.PaymentStatus == PaymentStatus.Paid
+                                 ? "<span class='badge bg-success'>Paid</span>"
+                                 : "<span class='badge bg-warning text-dark'>Pending</span>")
+                    </p>
+                }
+            </div>
+
+            <div class="modal-footer border-0">
+                @{
+                    var userId = ViewBag.UserId as int? ?? 0;
+                    bool isAppointer = userId == Model.AuthorId;
+                    bool isAppointee = userId == Model.ReceiverId;
+                }
+
+                @* Pending *@
+                @if (Model.Status == AppointmentStatus.Pending)
+                {
+                    if (isAppointer)
+                    {
+                        <button class="btn btn-danger" onclick="cancelAppointment(@Model.Id)">Cancel Appointment</button>
+                    }
+                    else if (isAppointee)
+                    {
+                        <button class="btn btn-success" onclick="acceptAppointment(@Model.Id)">Accept</button>
+                        <button class="btn btn-outline-danger" onclick="cancelAppointment(@Model.Id)">Reject</button>
+                    }
+                }
+
+                @* Accepted *@
+                else if (Model.Status == AppointmentStatus.Accepted)
+                {
+                    if (isAppointer)
+                    {
+                        @if (Model.PaymentStatus != PaymentStatus.Paid)
+                        {
+                            <button class="btn btn-success" onclick="markAsPaid(@Model.Id)">Mark as Paid</button>
+                            <button class="btn btn-danger" onclick="cancelAppointment(@Model.Id)">Cancel Appointment</button>
+                        }
+                    }
+
+                    if (isAppointee)
+                    {
+                        @if (Model.PaymentStatus == PaymentStatus.Paid)
+                        {
+                            <button class="btn btn-primary" onclick="completeAppointment(@Model.Id)">Complete Appointment</button>
+                        }
+                    }
+                }
+
+                @* For all other statuses — view only *@
+                else
+                {
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                }
+            </div>
+        </div>
+    </div>
+</div>

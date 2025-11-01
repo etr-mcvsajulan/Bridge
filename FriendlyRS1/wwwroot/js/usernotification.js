@@ -1,6 +1,6 @@
 ﻿"use strict";
 var connection = new signalR.HubConnectionBuilder().withUrl("/NotificationUserHub?userId=" + userId).build();
-connection.on("sendToUser", (actorName, notificationMessage, userId, profileImage) => {
+connection.on("sendToUser", (actorName, notificationMessage, userId, profileImage, redirect) => {
 
     if (profileImage == null) {
         profileImage = "/avatar.png";
@@ -14,7 +14,7 @@ connection.on("sendToUser", (actorName, notificationMessage, userId, profileImag
                     <button class="close" data-dismiss="alert">×</button>
                 </div>
                 <hr/>
-                <div onclick="openProfile(${userId})" class="m-0 d-flex p-0 align-items-center">
+                <div onclick="openRedirect('${redirect}')" class="m-0 d-flex p-0 align-items-center">
                    <img class="rounded-circle border-dark" style="height:56px; width:56px" id="ItemPreview" src="${profileImage}">
                    <div class="pl-2"> ${actorName + " " + notificationMessage} </div>
                 </div>
@@ -49,13 +49,11 @@ connection.on("sendToUser", (actorName, notificationMessage, userId, profileImag
     }
 });
 
-
-function openProfile(id) {
-    if (id != null) {
-        let url = '/UserProfile/Index/' + id;
+function openRedirect(url) {
+    if (url) {
         window.location.replace(url);
     } else {
-        console.log('Cannot load profile, user id is undefined or null');
+        console.warn("Redirect URL is missing.");
     }
 }
 

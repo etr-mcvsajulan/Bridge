@@ -28,5 +28,15 @@ namespace FriendlyRS1.Repository.Repositories
                 .AsNoTracking()
                 .ToList();
         }
+
+        public Appointments GetAppointment(int id)
+        {
+            return _dbSet
+                .Include(a => a.Author)
+                .Include(a => a.Receiver)
+                .Include(a => a.Payment)
+                .AsNoTracking()
+                .FirstOrDefault(a => a.Id == id);
+        }
     }
 }
