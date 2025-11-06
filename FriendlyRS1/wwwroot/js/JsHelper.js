@@ -160,13 +160,29 @@ function acceptAppointment(appointmentId) {
     if (appointmentId == 0 || appointmentId == null)
         return;
 
+    const professionalFeeInput = document.getElementById('professionalFeeInput');
+    let professionalFee = 0;
+
+    // If the fee input exists, ensure it’s filled
+    if (professionalFeeInput) {
+        professionalFee = parseFloat(professionalFeeInput.value);
+        if (isNaN(professionalFee) || professionalFee <= 0) {
+            alert('⚠️ Please enter a valid professional fee before accepting.');
+            professionalFeeInput.focus();
+            return;
+        }
+    }
+
     let url = '/Appointment/AcceptAppointment';
     if (confirm('Do you want to accept this appointment?') == true) {
 
         $.ajax({
             type: 'POST',
             url: url,
-            data: { appointmentId },
+            data: {
+                AppointmentID: appointmentId,
+                ProfessionalFee: professionalFee
+            },
             success: function (res) {
                 if (res.success) {
                     alert('Appointment accepted successfully.');

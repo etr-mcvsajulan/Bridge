@@ -129,12 +129,12 @@ namespace FriendlyRS1.Controllers
             return Json(new { success = true, message = "Appointment created successfully." });
         }
 
-        public async Task<IActionResult> AcceptAppointment(int appointmentId)
+        public async Task<IActionResult> AcceptAppointment(AcceptAppointmentVM accept)
         {
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null) return Unauthorized();
 
-            var appointment = unitOfWork.Appointment.Find(appointmentId);
+            var appointment = unitOfWork.Appointment.Find(accept.AppointmentID);
             if (appointment == null)
                 return NotFound(new { success = false, message = "Appointment not found." });
 
@@ -147,7 +147,7 @@ namespace FriendlyRS1.Controllers
             {
                 AppointmentId = appointment.Id,
                 TransactionId = unitOfWork.AppointmentPayment.GenerateTransactionId("PAY"),
-                ProfessionalFee = 500, 
+                ProfessionalFee = accept.ProfessionalFee, 
                 ServiceFee = 50,      
                 PaymentMethod = "GCash",
                 PaymentStatus = PaymentStatus.Pending,
@@ -334,7 +334,16 @@ namespace FriendlyRS1.Controllers
                 ReceiverId = appointment.ReceiverId,
                 AuthorName = $"{appointment.Author.FirstName} {appointment.Author.LastName}",
                 ReceiverName = $"{appointment.Receiver.FirstName} {appointment.Receiver.LastName}",
-                PaymentStatus = appointment?.Payment?.PaymentStatus
+                PaymentDetails = appointment.Payment == null ? null : new AppointmentPaymentVM
+                {
+                    Id = appointment.Payment.Id,
+                    TransactionId = appointment.Payment.TransactionId,
+                    ProfessionalFee = appointment.Payment.ProfessionalFee,
+                    ServiceFee = appointment.Payment.ServiceFee,
+                    PaymentMethod = appointment.Payment.PaymentMethod,
+                    Status = appointment.Payment.PaymentStatus,
+                    PaidAt = appointment.Payment.PaidAt
+                }
             };
 
             ViewBag.UserId = currentUser.Id;

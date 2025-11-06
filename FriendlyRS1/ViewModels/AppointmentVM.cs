@@ -53,7 +53,7 @@ namespace FriendlyRS1.ViewModels
         [Display(Name = "Created At")]
         public DateTime CreatedAt { get; set; }
 
-        public PaymentStatus? PaymentStatus { get; set; }
+        public AppointmentPaymentVM? PaymentDetails { get; set; }
 
         public string StatusText => Status.ToString();
         public string StartTimeFormatted => StartTime.ToString("yyyy-MM-dd HH:mm");

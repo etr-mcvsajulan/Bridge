@@ -3,6 +3,12 @@
 <div class="modal fade" id="appointmentDetailsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
+            @{
+                var userId = ViewBag.UserId as int? ?? 0;
+                bool isAppointer = userId == Model.AuthorId;
+                bool isAppointee = userId == Model.ReceiverId;
+
+            }
             <div class="modal-header border-0">
                 <h5 class="modal-title">@Model.Title</h5>
                 <span class="badge
@@ -22,24 +28,71 @@
                 <p><strong>Appointer:</strong> @Model.AuthorName</p>
                 <p><strong>Appointee:</strong> @Model.ReceiverName</p>
 
-                @if (Model.Status == AppointmentStatus.Accepted)
+                @if (Model.Status == AppointmentStatus.Pending && isAppointee)
                 {
-                    <hr />
-                    <p>
-                        <strong>Payment Status:</strong>
-                        @Html.Raw(Model.PaymentStatus == PaymentStatus.Paid
-                                 ? "<span class='badge bg-success'>Paid</span>"
-                                 : "<span class='badge bg-warning text-dark'>Pending</span>")
-                    </p>
+                    <div class="mb-3">
+                        <strong>Professional Fee</strong>
+                        <input type="number" step="0.01" class="form-control" id="professionalFeeInput" placeholder="Enter professional fee" required />
+                    </div>
+                }
+
+                @* Payment Details Section *@
+                @if ((Model.Status == AppointmentStatus.Accepted || Model.Status == AppointmentStatus.Completed) && Model.PaymentDetails != null)
+                {
+                    <div class="card mt-3 shadow-sm border-0" style="background-color:#f8f9fa;">
+                        <div class="card-body">
+                            <h6 class="fw-bold text-primary mb-3">
+                                <i class="bi bi-credit-card me-1"></i> Payment Details
+                            </h6>
+                            <div class="row mb-2">
+                                <div class="col-sm-6">
+                                    <strong>Professional Fee:</strong>
+                                    <span class="text-dark">@Model.PaymentDetails.ProfessionalFee.ToString("N2")</span>
+                                </div>
+                                <div class="col-sm-6">
+                                    <strong>Payment Method:</strong>
+                                    <span>@Model.PaymentDetails.PaymentMethod</span>
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-sm-6">
+                                    <strong>Service Fee:</strong>
+                                    <span class="text-dark">@Model.PaymentDetails.ServiceFee.ToString("N2")</span>
+                                </div>
+                                <div class="col-sm-6">
+                                    <strong>Status:</strong>
+                                    @if (Model.PaymentDetails.Status == PaymentStatus.Paid)
+                                    {
+                                        <span class="badge bg-success">Paid</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    }
+                                </div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-sm-6">
+                                    @if (!string.IsNullOrEmpty(Model.PaymentDetails.PaymentMethod))
+                                    {
+                                        <strong>Total Amount:</strong>
+                                        <span class="fw-bold text-success">@Model.PaymentDetails.TotalAmount.ToString("N2")</span>
+                                    }
+                                </div>
+                                <div class="col-sm-6">
+                                    @if (!string.IsNullOrEmpty(Model.PaymentDetails.PaymentMethod))
+                                    {
+                                        <strong>Paid At:</strong>
+                                        <span>@Model.PaymentDetails.PaidAt?.ToString("f")</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 }
             </div>
 
             <div class="modal-footer border-0">
-                @{
-                    var userId = ViewBag.UserId as int? ?? 0;
-                    bool isAppointer = userId == Model.AuthorId;
-                    bool isAppointee = userId == Model.ReceiverId;
-                }
 
                 @* Pending *@
                 @if (Model.Status == AppointmentStatus.Pending)
@@ -60,7 +113,7 @@
                 {
                     if (isAppointer)
                     {
-                        @if (Model.PaymentStatus != PaymentStatus.Paid)
+                        @if (Model.PaymentDetails.Status != PaymentStatus.Paid)
                         {
                             <button class="btn btn-success" onclick="markAsPaid(@Model.Id)">Mark as Paid</button>
                             <button class="btn btn-danger" onclick="cancelAppointment(@Model.Id)">Cancel Appointment</button>
@@ -69,7 +122,7 @@
 
                     if (isAppointee)
                     {
-                        @if (Model.PaymentStatus == PaymentStatus.Paid)
+                        @if (Model.PaymentDetails.Status == PaymentStatus.Paid)
                         {
                             <button class="btn btn-primary" onclick="completeAppointment(@Model.Id)">Complete Appointment</button>
                         }
@@ -79,9 +132,10 @@
                 @* For all other statuses — view only *@
                 else
                 {
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    @* <button class="btn btn-secondary" type="button" onclick="closeAppointmentModal()">Close</button> *@
                 }
             </div>
         </div>
     </div>
 </div>
+ 

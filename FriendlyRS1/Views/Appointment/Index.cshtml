@@ -114,7 +114,6 @@
 
                 $.get('/Appointment/AppointmentDetailsPartial', { appointmentId }, function (html) {
                     $('#appointmentDetailsModalContainer').html(html);
-                    console.log("Injected modal:", $('#appointmentDetailsModalContainer').html()); // 👀 check in DevTools
 
                     const modalEl = document.getElementById('appointmentDetailsModal');
                     if (modalEl) {
