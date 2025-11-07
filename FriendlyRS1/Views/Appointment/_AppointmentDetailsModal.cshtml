@@ -42,7 +42,7 @@
                     <div class="card mt-3 shadow-sm border-0" style="background-color:#f8f9fa;">
                         <div class="card-body">
                             <h6 class="fw-bold text-primary mb-3">
-                                <i class="bi bi-credit-card me-1"></i> Payment Details
+                                <i class="bi bi-credit-card me-1"></i> Payment Details ( @Model.PaymentDetails.TransactionId )
                             </h6>
                             <div class="row mb-2">
                                 <div class="col-sm-6">
@@ -50,8 +50,25 @@
                                     <span class="text-dark">@Model.PaymentDetails.ProfessionalFee.ToString("N2")</span>
                                 </div>
                                 <div class="col-sm-6">
-                                    <strong>Payment Method:</strong>
-                                    <span>@Model.PaymentDetails.PaymentMethod</span>
+                                    @if (Model.PaymentDetails.Status == PaymentStatus.Pending && isAppointer)
+                                    {
+                                        <div class="d-flex align-items-center">
+                                            <strong class="me-2 flex-shrink-0">Payment Method:</strong>
+                                            <select id="paymentMethodSelect" class="form-select form-select-sm w-auto">
+                                                <option value="">-- Choose --</option>
+                                                <option value="GCash">GCash</option>
+                                                <option value="Maya">Maya</option>
+                                                <option value="BankTransfer">Bank Transfer</option>
+                                                <option value="CreditCard">Credit Card</option>
+                                                <option value="Cash">Cash</option>
+                                            </select>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <strong>Payment Method:</strong>
+                                        <span>@Model.PaymentDetails.PaymentMethod</span>
+                                    }
                                 </div>
                             </div>
                             <div class="row mb-2">
@@ -73,14 +90,14 @@
                             </div>
                             <div class="row mb-2">
                                 <div class="col-sm-6">
-                                    @if (!string.IsNullOrEmpty(Model.PaymentDetails.PaymentMethod))
+                                    @if (Model.PaymentDetails != null)
                                     {
                                         <strong>Total Amount:</strong>
                                         <span class="fw-bold text-success">@Model.PaymentDetails.TotalAmount.ToString("N2")</span>
                                     }
                                 </div>
                                 <div class="col-sm-6">
-                                    @if (!string.IsNullOrEmpty(Model.PaymentDetails.PaymentMethod))
+                                    @if (Model.PaymentDetails != null)
                                     {
                                         <strong>Paid At:</strong>
                                         <span>@Model.PaymentDetails.PaidAt?.ToString("f")</span>
@@ -115,7 +132,7 @@
                     {
                         @if (Model.PaymentDetails.Status != PaymentStatus.Paid)
                         {
-                            <button class="btn btn-success" onclick="markAsPaid(@Model.Id)">Mark as Paid</button>
+                            <button class="btn btn-success" onclick="markAsPaid(@Model.Id, document.getElementById('paymentMethodSelect')?.value)">Mark as Paid</button>
                             <button class="btn btn-danger" onclick="cancelAppointment(@Model.Id)">Cancel Appointment</button>
                         }
                     }
@@ -138,4 +155,3 @@
         </div>
     </div>
 </div>
- 

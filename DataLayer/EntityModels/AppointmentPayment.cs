@@ -30,7 +30,7 @@ namespace DataLayer.EntityModels
         public decimal TotalAmount => ProfessionalFee + ServiceFee;
 
         [StringLength(50)]
-        public string PaymentMethod { get; set; } 
+        public string? PaymentMethod { get; set; } 
 
         public PaymentStatus? PaymentStatus { get; set; }
 

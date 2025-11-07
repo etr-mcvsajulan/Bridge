@@ -199,9 +199,14 @@ function acceptAppointment(appointmentId) {
     }
 }
 
-function markAsPaid(appointmentId) {
+function markAsPaid(appointmentId, paymentMethod) {
     if (appointmentId == 0 || appointmentId == null)
         return;
+
+    if (!paymentMethod || paymentMethod.trim() === "") {
+        alert('Please select payment method');
+        return;
+    }
 
     let url = '/Appointment/MarkAsPaid';
     if (confirm('Are you sure you want to mark this appointment as paid?') == true) {
@@ -209,7 +214,10 @@ function markAsPaid(appointmentId) {
         $.ajax({
             type: 'POST',
             url: url,
-            data: { appointmentId },
+            data: {
+                AppointmentID: appointmentId,
+                PaymentMethod: paymentMethod
+            },
             success: function (res) {
                 if (res.success) {
                     alert('Marked as paid successfully.');

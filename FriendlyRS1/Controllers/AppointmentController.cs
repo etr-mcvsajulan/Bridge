@@ -148,8 +148,8 @@ namespace FriendlyRS1.Controllers
                 AppointmentId = appointment.Id,
                 TransactionId = unitOfWork.AppointmentPayment.GenerateTransactionId("PAY"),
                 ProfessionalFee = accept.ProfessionalFee, 
-                ServiceFee = 50,      
-                PaymentMethod = "GCash",
+                ServiceFee = 75,      
+                PaymentMethod = "",
                 PaymentStatus = PaymentStatus.Pending,
                 CreatedAt = DateTime.UtcNow
             };
@@ -252,21 +252,22 @@ namespace FriendlyRS1.Controllers
             return Json(new { success = true, message = "Appointment cancelled successfully." });
         }
 
-        public async Task<IActionResult> MarkAsPaid(int appointmentId)
+        public async Task<IActionResult> MarkAsPaid(MarkAsPaidAppointmentVM paid)
         {
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser == null) return Unauthorized();
 
-            var payment = unitOfWork.AppointmentPayment.Get(x => x.AppointmentId == appointmentId);
+            var payment = unitOfWork.AppointmentPayment.Get(x => x.AppointmentId == paid.AppointmentID);
             if (payment == null)
                 return NotFound(new { success = false, message = "Payment record not found." });
 
+            payment.PaymentMethod = paid.PaymentMethod;
             payment.PaymentStatus = PaymentStatus.Paid;
             payment.PaidAt = DateTime.UtcNow;
             unitOfWork.AppointmentPayment.Update(payment);
             unitOfWork.Complete();
 
-            var appointment = unitOfWork.Appointment.Find(appointmentId);
+            var appointment = unitOfWork.Appointment.Find(paid.AppointmentID);
 
             // Notify
             BellNotification notification = new BellNotification
