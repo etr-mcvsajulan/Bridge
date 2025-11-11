@@ -206,12 +206,20 @@
                 </a>
 
                 @* <div class=" nav-icon-default px-lg-3 px-3" id="nearby" data-toggle="tooltip" data-placement="top" title="People nearby">
-                    <i class="fas fa-map-marker-alt fa-2x text-primary  bar-icon"></i>
+                <i class="fas fa-map-marker-alt fa-2x text-primary  bar-icon"></i>
                 </div> *@
-
-                <a class=" nav-icon-default nav-icon px-lg-3 pr-3" id="appointment" data-toggle="tooltip" data-placement="top" title="Appointment page" asp-area="" asp-controller="Appointment" asp-action="Index">
-                    <i class="fas fa-calendar-alt fa-2x text-primary bar-icon"></i>
-                </a>
+                @if (User.IsInRole("User"))
+                {
+                    <a class=" nav-icon-default nav-icon px-lg-3 pr-3" id="appointment" data-toggle="tooltip" data-placement="top" title="Appointment page" asp-area="" asp-controller="Appointment" asp-action="Index">
+                        <i class="fas fa-calendar-alt fa-2x text-primary bar-icon"></i>
+                    </a>
+                }
+                @if (User.IsInRole("Admin"))
+                {
+                    <a class=" nav-icon-default nav-icon px-lg-3 pr-3" id="transaction" data-toggle="tooltip" data-placement="top" title="Transaction page" asp-area="" asp-controller="Transaction" asp-action="Index">
+                        <i class="fas fa-exchange-alt fa-2x text-primary bar-icon"></i>
+                    </a>
+                }
             </div>
 
             <div class="acitvity-icons icons-responsive">
@@ -289,7 +297,11 @@
 
         if (path.includes("/appointment")) {
             $("#appointment").addClass("nav-icon");
-        } else {
+        }
+        else if (path.includes("/transaction")) {
+            $("#transaction").addClass("nav-icon");
+        }
+        else {
             $("#home").addClass("nav-icon");
         }
 

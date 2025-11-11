@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 
 namespace FriendlyRS1.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "User")]
     public class AppointmentController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;

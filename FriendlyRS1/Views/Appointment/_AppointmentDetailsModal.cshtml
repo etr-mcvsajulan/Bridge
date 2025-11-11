@@ -22,11 +22,25 @@
             </div>
 
             <div class="modal-body">
-                <p><strong>Description:</strong> @Model.Description</p>
-                <p><strong>Start:</strong> @Model.StartTime.ToString("f")</p>
-                <p><strong>End:</strong> @Model.EndTime.ToString("f")</p>
-                <p><strong>Appointer:</strong> @Model.AuthorName</p>
-                <p><strong>Appointee:</strong> @Model.ReceiverName</p>
+                <div class="d-flex justify-content-between">
+                    <div class="appointmentDetails">
+                        <p><strong>Description:</strong> @Model.Description</p>
+                        <p><strong>Start:</strong> @Model.StartTime.ToString("f")</p>
+                        <p><strong>End:</strong> @Model.EndTime.ToString("f")</p>
+                        <p><strong>Appointer:</strong> @Model.AuthorName</p>
+                        <p><strong>Appointee:</strong> @Model.ReceiverName</p>
+                    </div>
+                    <div class="QRCodePayment">
+                        @if (Model.PaymentDetails != null)
+                        {
+                            <img src="~/Images/QRCodePayment.jpg"
+                                 alt="QR Code"
+                                 class="img-fluid border rounded shadow-sm"
+                                 style="height:100%; max-height:200px; object-fit:contain;" />
+                        }
+
+                    </div>
+                </div>
 
                 @if (Model.Status == AppointmentStatus.Pending && isAppointee)
                 {
